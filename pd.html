@@ -1,0 +1,1639 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>拼豆库存</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --bg: #f6f7f9;
+    --card: #ffffff;
+    --line: #e8eaed;
+    --line2: #f2f3f5;
+    --text: #15171a;
+    --muted: #6b7280;
+    --faint: #9aa1ab;
+    --accent: #2f6bff;
+    --accent-soft: #eef3ff;
+    --warn: #a45a06;
+    --warn-soft: #fef3c7;
+    --ok: #067a5b;
+    --ok-soft: #e6f7f1;
+    --danger: #c0271c;
+  }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #e9ebee; color: var(--text);
+    font-size: 14px; line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  button, input { font-family: inherit; color: inherit; }
+
+  /* ---------- 手机容器 ---------- */
+  .phone {
+    position: relative; width: 100%; max-width: 430px; height: 100dvh;
+    background: var(--bg); overflow: hidden;
+    display: grid; grid-template-rows: 1fr auto;
+  }
+  @media (min-width: 560px) and (min-height: 700px) {
+    .phone {
+      height: min(920px, 94dvh); border-radius: 26px;
+      box-shadow: 0 20px 60px rgba(15,20,30,.18), 0 0 0 1px rgba(0,0,0,.06);
+    }
+  }
+
+  /* ---------- 页面栈 ---------- */
+  .pages { position: relative; overflow: hidden; min-height: 0; }
+  .page {
+    position: absolute; inset: 0; display: none; flex-direction: column;
+    background: var(--bg); min-height: 0;
+    /* 三重保险：任何一个失效都不会让别的页面露出来 */
+    visibility: hidden; opacity: 0;
+  }
+  .page.on { display: flex; visibility: visible; opacity: 1; }
+
+  /* 推入页（全屏覆盖，含 tabbar 区域） */
+  .push {
+    position: absolute; inset: 0; background: var(--bg); z-index: 30;
+    display: flex; flex-direction: column;
+    transform: translateX(100%); transition: transform .26s cubic-bezier(.32,.72,0,1);
+    pointer-events: none;
+  }
+  .push.on { transform: translateX(0); pointer-events: auto; }
+
+  /* ---------- 页面头 ---------- */
+  .ph { background: var(--bg); padding: 6px 16px 10px; flex: 0 0 auto; }
+  .ph.big { padding-top: max(14px, env(safe-area-inset-top)); }
+  .ph-row { display: flex; align-items: baseline; gap: 9px; margin-bottom: 3px; }
+  .ph h1 { font-size: 25px; font-weight: 700; letter-spacing: -.4px; }
+  .ph .sub { font-size: 11.5px; color: var(--faint); }
+  .ph .act {
+    margin-left: auto; border: 0; background: transparent; font-size: 13.5px;
+    color: var(--accent); padding: 4px; cursor: pointer; align-self: center;
+  }
+
+  .nav {
+    display: flex; align-items: center; gap: 9px; flex: 0 0 auto;
+    height: calc(46px + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) 6px 0 2px;
+    background: var(--card); border-bottom: 1px solid var(--line);
+  }
+  .nav button.back {
+    border: 0; background: transparent; font-size: 21px; color: var(--accent);
+    width: 40px; height: 40px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center; padding-bottom: 2px;
+  }
+  .nav .title { flex: 1; font-size: 16px; font-weight: 600; }
+  .nav .r { border: 0; background: transparent; font-size: 13.5px; color: var(--accent);
+            padding: 6px 10px; cursor: pointer; }
+
+  /* ---------- 滚动区 ---------- */
+  .body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+          padding: 0 16px 24px; min-height: 0; }
+
+  /* ---------- 搜索行（点选式，不调键盘） ---------- */
+  .srow { display: flex; gap: 8px; align-items: center; }
+  .sbtn {
+    flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px;
+    border: 0; background: #eceef1; border-radius: 10px; padding: 8px 12px;
+    height: 38px; font-size: 13.5px; color: var(--faint); cursor: pointer;
+    text-align: left;
+  }
+  .sbtn .ico { font-size: 13px; flex: 0 0 auto; }
+  .sbtn .v { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums;
+             letter-spacing: .3px; }
+  .sbtn .chev { margin-left: auto; font-size: 15px; color: #c9ced6; flex: 0 0 auto; }
+  .sortbtn {
+    width: 38px; height: 38px; flex: 0 0 auto; border: 0; border-radius: 10px;
+    background: #eceef1; color: var(--muted); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s, color .15s;
+  }
+  .sortbtn.on { background: var(--accent-soft); color: var(--accent); }
+
+  /* ---------- 点选网格 ---------- */
+  .picks { display: flex; flex-wrap: wrap; gap: 6px; }
+  .picks.lock { opacity: .32; pointer-events: none; }
+  .pick {
+    width: 46px; height: 46px; border: 1.5px solid var(--line); background: var(--card);
+    border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; padding: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums; color: var(--text); flex: 0 0 auto;
+  }
+  .pick em { font-style: normal; font-size: 9px; font-weight: 400; color: var(--faint);
+             line-height: 1.2; }
+  .pick.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+  .pick.on em { color: var(--accent); opacity: .85; }
+  .pick:disabled { opacity: .26; }
+  .pick.sm { width: 38px; height: 42px; font-size: 14.5px; }
+
+  /* ---------- 数字键盘层（覆盖在 sheet 之上，不调系统键盘） ---------- */
+  .padlayer {
+    position: absolute; inset: 0; z-index: 9; background: var(--card);
+    border-radius: 18px 18px 0 0; display: none; flex-direction: column;
+    padding: 0 16px calc(12px + env(safe-area-inset-bottom));
+  }
+  .padlayer.on { display: flex; }
+  .padhd { padding: 18px 2px 0; flex: 0 0 auto; }
+  .padhd .t { font-size: 12px; color: var(--muted); }
+  .padhd .v {
+    font-size: 34px; font-weight: 700; letter-spacing: -.8px; line-height: 1.35;
+    font-variant-numeric: tabular-nums; min-height: 46px;
+    border-bottom: 2px solid var(--accent); display: flex; align-items: baseline;
+  }
+  .padhd .v em { font-style: normal; font-size: 14px; color: var(--muted);
+                 margin-left: 5px; letter-spacing: 0; font-weight: 500; }
+  .padhd .v.ph { color: #cfd4da; }
+  .padspacer { flex: 1; min-height: 10px; }
+  .pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; flex: 0 0 auto; }
+  .pad button {
+    height: 53px; border: 0; border-radius: 12px; background: #f2f3f5;
+    font-size: 23px; font-weight: 600; cursor: pointer; color: var(--text);
+    font-variant-numeric: tabular-nums;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pad button:active { background: #e4e7eb; }
+  .pad button.fn { font-size: 15px; font-weight: 500; color: var(--muted); background: #ebedf0; }
+  .pad button:disabled { opacity: .3; }
+
+  /* ---------- 数值字段（点击弹键盘） ---------- */
+  .numfield {
+    display: flex; align-items: center; gap: 8px; border: 1.5px solid var(--line);
+    border-radius: 11px; padding: 10px 14px; background: #fff; cursor: pointer;
+    min-height: 50px;
+  }
+  .numfield:active { background: var(--accent-soft); }
+  .numfield .v { flex: 1; text-align: right; font-size: 21px; font-weight: 600;
+                 font-variant-numeric: tabular-nums; letter-spacing: -.2px; }
+  .numfield .v.ph { color: #cfd4da; font-weight: 400; font-size: 17px; }
+  .numfield .u { font-size: 13px; color: var(--muted); width: 22px; flex: 0 0 auto; }
+  .numfield.act { border-color: var(--accent); background: var(--accent-soft); }
+
+  /* ---------- 品牌实际色块 ---------- */
+  .sw { width: 30px; height: 30px; border-radius: 8px; flex: 0 0 auto;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 10.5px; font-weight: 700;
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,.07); }
+  .sw.big { width: 48px; height: 48px; border-radius: 11px; font-size: 12.5px; }
+
+  /* ---------- 色系筛选 ---------- */
+  .fambar {
+    display: flex; gap: 6px; overflow-x: auto; padding: 11px 0 11px;
+    scrollbar-width: none; position: sticky; top: 0; background: var(--bg); z-index: 5;
+    margin: 0 -16px; padding-left: 16px; padding-right: 16px;
+  }
+  .fambar::-webkit-scrollbar { display: none; }
+  .chip {
+    border: 0; background: #eceef1; border-radius: 8px; padding: 6px 11px;
+    font-size: 12.5px; color: var(--muted); white-space: nowrap; cursor: pointer;
+    font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 4px;
+    flex: 0 0 auto;
+  }
+  .chip.on { background: var(--text); color: #fff; }
+  .chip em { font-style: normal; font-size: 10px; opacity: .55; }
+  .chip.on em { opacity: .75; }
+  .chip.has em { color: var(--accent); font-weight: 700; opacity: 1; }
+  .chip.on.has em { color: #a8c1ff; }
+
+  /* ---------- 色卡网格 ---------- */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 7px; }
+  .bead {
+    position: relative; aspect-ratio: 1/1; border: 0; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12.5px; font-weight: 600; cursor: pointer; overflow: hidden;
+    padding: 0; letter-spacing: .1px;
+    transition: transform .1s;
+  }
+  .bead:active { transform: scale(.95); }
+  /* 有库存角标时给底部留位，文字自然居中在剩余空间 */
+  .bead.hasq { padding-bottom: 13px; }
+  .bead .qty {
+    position: absolute; left: 0; right: 0; bottom: 0; padding: 1px 0 2px;
+    font-size: 10px; font-weight: 700; text-align: center;
+    background: rgba(255,255,255,.94); color: #111;
+    font-variant-numeric: tabular-nums;
+  }
+  .bead .qty.est { background: rgba(254,243,199,.97); color: var(--warn); }
+  .bead .multi { position: absolute; top: 5px; right: 5px; width: 5px; height: 5px;
+                 border-radius: 50%; background: #fff; box-shadow: 0 0 0 1.5px rgba(0,0,0,.3); }
+
+  .empty { text-align: center; color: var(--muted); font-size: 13px; padding: 60px 20px; line-height: 1.9; }
+
+  /* ---------- 卡片列表 ---------- */
+  .grp { background: var(--card); border-radius: 12px; overflow: hidden; margin-bottom: 10px; }
+  .item {
+    display: flex; align-items: center; gap: 11px; padding: 12px 13px;
+    border-bottom: 1px solid var(--line2); cursor: pointer; background: var(--card);
+  }
+  .item:last-child { border-bottom: 0; }
+  .item:active { background: #f7f8fa; }
+  .item .ico { width: 34px; height: 34px; border-radius: 9px; flex: 0 0 auto;
+               display: flex; align-items: center; justify-content: center;
+               font-size: 12px; font-weight: 700; }
+  .item .mid { flex: 1; min-width: 0; }
+  .item .mid b { font-size: 14px; display: block; font-weight: 600; }
+  .item .mid small { font-size: 11.5px; color: var(--muted); display: block;
+                     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item .right { text-align: right; font-variant-numeric: tabular-nums; flex: 0 0 auto; }
+  .item .right b { font-size: 15px; font-weight: 600; }
+  .item .right small { display: block; font-size: 10.5px; color: var(--muted); }
+  .item .arrow { color: #c9ced6; font-size: 15px; flex: 0 0 auto; margin-left: -2px; }
+
+  .tag { font-size: 10px; padding: 1px 5px; border-radius: 4px; font-weight: 500;
+         display: inline-block; vertical-align: 1px; }
+  .tag.m { background: var(--ok-soft); color: var(--ok); }
+  .tag.e { background: var(--warn-soft); color: var(--warn); }
+  .tag.n { background: #f0f1f4; color: var(--faint); }
+
+  /* 详情合计 */
+  .hero { display: flex; align-items: center; gap: 13px; padding: 14px 2px 16px; }
+  .hero .big { width: 58px; height: 58px; border-radius: 12px; flex: 0 0 auto;
+               display: flex; align-items: center; justify-content: center;
+               font-weight: 700; font-size: 13.5px; }
+  .hero .mid { flex: 1; min-width: 0; }
+  .hero .mid .n { font-size: 27px; font-weight: 700; letter-spacing: -.6px;
+                  font-variant-numeric: tabular-nums; line-height: 1.15; }
+  .hero .mid .n span { font-size: 12.5px; font-weight: 500; color: var(--muted); margin-left: 3px; }
+  .hero .mid .g { font-size: 12px; color: var(--muted); }
+
+  .sect-t { font-size: 11.5px; color: var(--faint); font-weight: 500;
+            letter-spacing: .4px; padding: 16px 2px 7px; display: flex; align-items: center; }
+  .sect-t .sp { margin-left: auto; font-weight: 400; font-size: 11px; }
+
+  /* 日志 */
+  .log { display: flex; gap: 9px; padding: 9px 13px; border-bottom: 1px solid var(--line2);
+         font-size: 12.5px; background: var(--card); }
+  .log:last-child { border-bottom: 0; }
+  .log .t { color: var(--faint); font-size: 10.5px; flex: 0 0 40px; padding-top: 2px;
+            font-variant-numeric: tabular-nums; }
+  .log .c { flex: 1; line-height: 1.45; }
+  .log .c em { font-style: normal; color: var(--muted); }
+
+  /* ---------- 底部 tabbar ---------- */
+  .tabbar {
+    display: flex; background: rgba(255,255,255,.97); border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom); flex: 0 0 auto;
+    backdrop-filter: blur(12px);
+  }
+  .tabbar button {
+    flex: 1; border: 0; background: transparent; padding: 8px 0 7px;
+    font-size: 10.5px; color: var(--faint); cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+  }
+  .tabbar button .i { font-size: 19px; line-height: 1; }
+  .tabbar button.on { color: var(--accent); font-weight: 600; }
+
+  /* ---------- Bottom Sheet ---------- */
+  .scrim {
+    position: absolute; inset: 0; background: rgba(12,16,22,.42); z-index: 60;
+    opacity: 0; pointer-events: none; transition: opacity .22s;
+  }
+  .scrim.on { opacity: 1; pointer-events: auto; }
+  .sheet {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 61;
+    background: var(--card); border-radius: 18px 18px 0 0;
+    transform: translateY(101%); transition: transform .28s cubic-bezier(.32,.72,0,1);
+    max-height: 92%; display: flex; flex-direction: column;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
+  }
+  .sheet.on { transform: translateY(0); }
+  .sheet .handle { width: 34px; height: 4px; border-radius: 2px; background: #dcdfe4;
+                   margin: 8px auto 0; flex: 0 0 auto; }
+  .sheet .sh { padding: 12px 18px 0; flex: 0 0 auto; }
+  .sheet .sh h3 { font-size: 16.5px; font-weight: 650; }
+  .sheet .sh p { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .sheet .sb { padding: 4px 18px 0; overflow-y: auto; min-height: 0; }
+
+  .lbl { font-size: 11.5px; color: var(--faint); margin: 14px 0 6px; letter-spacing: .3px; }
+  .seg { display: flex; gap: 3px; background: #f0f1f4; padding: 3px; border-radius: 10px; }
+  .seg button {
+    flex: 1; border: 0; background: transparent; padding: 8px 4px; border-radius: 8px;
+    font-size: 13px; color: var(--muted); cursor: pointer; white-space: nowrap;
+  }
+  .seg button.on { background: var(--card); color: var(--text); font-weight: 600;
+                   box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+  .seg button:disabled { opacity: .35; }
+
+  .numin { display: flex; align-items: center; gap: 9px; }
+
+  .prev { background: #f6f7f9; border-radius: 10px; padding: 11px 13px; font-size: 12.5px;
+          margin-top: 14px; color: var(--muted); line-height: 1.7; }
+  .prev b { color: var(--text); font-variant-numeric: tabular-nums; }
+  .prev .w { color: var(--warn); }
+  .prev .line { display: flex; justify-content: space-between; gap: 8px; }
+  .prev .good { color: var(--ok); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .prev .bad  { color: var(--danger); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .prev hr { border: 0; border-top: 1px solid var(--line); margin: 8px 0; }
+
+  .hint {
+    background: var(--accent-soft); border-radius: 10px; padding: 10px 12px;
+    font-size: 12px; line-height: 1.65; color: #33507f; margin-bottom: 12px;
+  }
+  .hint b { color: #1f3d70; font-weight: 600; }
+
+  .acts { display: flex; gap: 9px; padding: 16px 18px 0; flex: 0 0 auto; }
+  .btn {
+    flex: 1; border: 0; border-radius: 11px; padding: 13px; font-size: 14.5px;
+    cursor: pointer; background: #f0f1f4; color: var(--text); font-weight: 500;
+  }
+  .btn.pri { background: var(--accent); color: #fff; font-weight: 600; }
+  .btn.dgr { background: #fdecea; color: var(--danger); font-weight: 500; }
+  .btn:active { opacity: .82; }
+
+  .field { margin-bottom: 11px; }
+  .field label { font-size: 11.5px; color: var(--faint); display: block; margin-bottom: 5px; }
+  .field input {
+    width: 100%; border: 1.5px solid var(--line); border-radius: 10px;
+    padding: 11px 13px; font-size: 14px; outline: none; background: #fff;
+  }
+  .field input:focus { border-color: var(--accent); background: var(--accent-soft); }
+
+  /* ---------- 直径快捷选择 ---------- */
+  .dias { display: flex; gap: 7px; }
+  .dia {
+    flex: 1 1 0; min-width: 0; height: 48px; border: 1.5px solid var(--line);
+    border-radius: 11px; background: var(--card); cursor: pointer; padding: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 1px; font-size: 14px; font-weight: 600; color: var(--text);
+    font-variant-numeric: tabular-nums; transition: border-color .12s, background .12s;
+  }
+  .dia em {
+    font-style: normal; font-size: 9.5px; font-weight: 400;
+    color: var(--faint); letter-spacing: .2px;
+  }
+  .dia.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+  .dia.on em { color: var(--accent); opacity: .8; }
+  .dia .u { font-size: 10px; font-weight: 400; opacity: .6; margin-left: 1px; }
+
+  .inline-btn {
+    width: 100%; border: 1.5px dashed var(--line); background: var(--card);
+    border-radius: 11px; padding: 12px; font-size: 13.5px; color: var(--accent);
+    cursor: pointer; font-weight: 500;
+  }
+  .inline-btn:active { background: var(--accent-soft); }
+</style>
+</head>
+<body>
+
+<div class="phone">
+
+  <!-- ========== 页面栈 ========== -->
+  <div class="pages">
+
+    <!-- ① 库存（首页） -->
+    <section class="page on" id="p-stock">
+      <div class="ph big">
+        <div class="ph-row">
+          <h1>库存</h1>
+          <div class="sub" id="s-sub">—</div>
+        </div>
+        <div class="srow">
+          <button class="sbtn" id="btn-pick">
+            <span class="ico">⌕</span>
+            <span id="pick-label">定位色号</span>
+            <span class="chev">›</span>
+          </button>
+          <button class="sortbtn" id="btn-sort" aria-label="切换排序">
+            <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor"
+                 stroke-width="1.8" stroke-linecap="round"><g id="sort-ico"></g></svg>
+          </button>
+        </div>
+      </div>
+      <div class="body" id="stock-body">
+        <div class="fambar" id="fambar"></div>
+        <div class="grid" id="grid"></div>
+      </div>
+    </section>
+
+    <!-- ② 品牌 -->
+    <section class="page" id="p-brand">
+      <div class="ph big">
+        <div class="ph-row">
+          <h1>品牌</h1>
+          <div class="sub" id="b-sub">—</div>
+          <button class="act" id="btn-add-brand">新增</button>
+        </div>
+      </div>
+      <div class="body" id="brand-body"></div>
+    </section>
+
+    <!-- ③ 日志 -->
+    <section class="page" id="p-log">
+      <div class="ph big">
+        <div class="ph-row">
+          <h1>日志</h1>
+          <div class="sub" id="l-sub">—</div>
+        </div>
+      </div>
+      <div class="body" id="log-body" style="padding:0 16px"></div>
+    </section>
+
+  </div>
+
+  <!-- ========== 推入页：色号详情 ========== -->
+  <div class="push" id="p-color">
+    <div class="nav">
+      <button class="back" id="color-back">‹</button>
+      <div class="title" id="color-title">A21</div>
+    </div>
+    <div class="body" id="color-body" style="padding-top:2px"></div>
+  </div>
+
+  <!-- ========== 推入页：品牌详情 ========== -->
+  <div class="push" id="p-type">
+    <div class="nav">
+      <button class="back" id="type-back">‹</button>
+      <div class="title" id="type-title">品牌</div>
+    </div>
+    <div class="body" id="type-body" style="padding-top:2px"></div>
+  </div>
+
+  <!-- ========== 底部 tabbar ========== -->
+  <nav class="tabbar">
+    <button data-tab="stock" class="on"><span class="i">▦</span>库存</button>
+    <button data-tab="brand"><span class="i">◫</span>品牌</button>
+    <button data-tab="log"><span class="i">≡</span>日志</button>
+  </nav>
+
+  <!-- ========== sheet ========== -->
+  <div class="scrim" id="scrim"></div>
+  <div class="sheet" id="sheet"></div>
+
+</div>
+
+<script>
+const DATA = {"scheme":"MARD","brand":"MARD","title":"MARD 221 色色号表","version":"1.0","total":221,"source":"MARD 官方 221 色色卡照片取色（2026-11）","colorValueCaveat":"色值为色卡照片逐格取样的中位数，受拍摄光照与图片压缩影响，与实物存在色偏（估计 ΔE 3–8）。仅用于界面渲染色块辅助识别，不作为精确比对依据；用户可按实物校正。","note":"编号不补零（A1、A10）。原图右侧 + 号标记的是相对旧版 144 色新增的色号，本表不区分。","series":[{"prefix":"A","count":26,"colors":[{"code":"A1","num":1,"hex":"#FCF7D0"},{"code":"A2","num":2,"hex":"#FEFEDC"},{"code":"A3","num":3,"hex":"#FCFE92"},{"code":"A4","num":4,"hex":"#FCED60"},{"code":"A5","num":5,"hex":"#F4DB39"},{"code":"A6","num":6,"hex":"#FAAE56"},{"code":"A7","num":7,"hex":"#FB8A52"},{"code":"A8","num":8,"hex":"#FDDC51"},{"code":"A9","num":9,"hex":"#F99B5E"},{"code":"A10","num":10,"hex":"#F67D38"},{"code":"A11","num":11,"hex":"#FBE0A2"},{"code":"A12","num":12,"hex":"#FB9873"},{"code":"A13","num":13,"hex":"#FBC274"},{"code":"A14","num":14,"hex":"#F2573F"},{"code":"A15","num":15,"hex":"#FAEB68"},{"code":"A16","num":16,"hex":"#FCF1A3"},{"code":"A17","num":17,"hex":"#F8E579"},{"code":"A18","num":18,"hex":"#F7C37E"},{"code":"A19","num":19,"hex":"#FA7D76"},{"code":"A20","num":20,"hex":"#FBD97F"},{"code":"A21","num":21,"hex":"#FEE699"},{"code":"A22","num":22,"hex":"#F8F889"},{"code":"A23","num":23,"hex":"#E6D0BA"},{"code":"A24","num":24,"hex":"#FAF6B1"},{"code":"A25","num":25,"hex":"#FBD985"},{"code":"A26","num":26,"hex":"#F8C83F"}]},{"prefix":"B","count":32,"colors":[{"code":"B1","num":1,"hex":"#E5EE3D"},{"code":"B2","num":2,"hex":"#62F34A"},{"code":"B3","num":3,"hex":"#A2F981"},{"code":"B4","num":4,"hex":"#5DE035"},{"code":"B5","num":5,"hex":"#39E356"},{"code":"B6","num":6,"hex":"#68E2A5"},{"code":"B7","num":7,"hex":"#3CB082"},{"code":"B8","num":8,"hex":"#1E9B54"},{"code":"B9","num":9,"hex":"#255036"},{"code":"B10","num":10,"hex":"#98D5C1"},{"code":"B11","num":11,"hex":"#5D7230"},{"code":"B12","num":12,"hex":"#1A6D3D"},{"code":"B13","num":13,"hex":"#D1EA89"},{"code":"B14","num":14,"hex":"#B3E851"},{"code":"B15","num":15,"hex":"#335031"},{"code":"B16","num":16,"hex":"#CFE29E"},{"code":"B17","num":17,"hex":"#9DB03F"},{"code":"B18","num":18,"hex":"#E3EE5E"},{"code":"B19","num":19,"hex":"#2EB485"},{"code":"B20","num":20,"hex":"#C5F1D4"},{"code":"B21","num":21,"hex":"#126968"},{"code":"B22","num":22,"hex":"#0C373D"},{"code":"B23","num":23,"hex":"#2B381E"},{"code":"B24","num":24,"hex":"#F1FAB4"},{"code":"B25","num":25,"hex":"#53846C"},{"code":"B26","num":26,"hex":"#897E39"},{"code":"B27","num":27,"hex":"#D1E1B4"},{"code":"B28","num":28,"hex":"#A0E6B8"},{"code":"B29","num":29,"hex":"#C4E261"},{"code":"B30","num":30,"hex":"#E6FCB9"},{"code":"B31","num":31,"hex":"#B8E59C"},{"code":"B32","num":32,"hex":"#9DAC60"}]},{"prefix":"C","count":29,"colors":[{"code":"C1","num":1,"hex":"#EFFCF0"},{"code":"C2","num":2,"hex":"#AEFAFA"},{"code":"C3","num":3,"hex":"#A0E3F6"},{"code":"C4","num":4,"hex":"#47CCFB"},{"code":"C5","num":5,"hex":"#0AABEC"},{"code":"C6","num":6,"hex":"#55A9EE"},{"code":"C7","num":7,"hex":"#3777D1"},{"code":"C8","num":8,"hex":"#1153BD"},{"code":"C9","num":9,"hex":"#304CC3"},{"code":"C10","num":10,"hex":"#47B9DC"},{"code":"C11","num":11,"hex":"#30D9DB"},{"code":"C12","num":12,"hex":"#2B3044"},{"code":"C13","num":13,"hex":"#D4EBF9"},{"code":"C14","num":14,"hex":"#DDFAFE"},{"code":"C15","num":15,"hex":"#2EC1C2"},{"code":"C16","num":16,"hex":"#18569D"},{"code":"C17","num":17,"hex":"#1FC3EA"},{"code":"C18","num":18,"hex":"#1A3141"},{"code":"C19","num":19,"hex":"#1F849E"},{"code":"C20","num":20,"hex":"#20699E"},{"code":"C21","num":21,"hex":"#C7E1F8"},{"code":"C22","num":22,"hex":"#6DB4B9"},{"code":"C23","num":23,"hex":"#CFE1F7"},{"code":"C24","num":24,"hex":"#81C5F6"},{"code":"C25","num":25,"hex":"#B4E4EB"},{"code":"C26","num":26,"hex":"#40ABD2"},{"code":"C27","num":27,"hex":"#D3E5F8"},{"code":"C28","num":28,"hex":"#BECFE9"},{"code":"C29","num":29,"hex":"#394587"}]},{"prefix":"D","count":26,"colors":[{"code":"D1","num":1,"hex":"#B2B6F2"},{"code":"D2","num":2,"hex":"#868CDA"},{"code":"D3","num":3,"hex":"#3253A8"},{"code":"D4","num":4,"hex":"#1B2782"},{"code":"D5","num":5,"hex":"#B845C7"},{"code":"D6","num":6,"hex":"#AD7BDE"},{"code":"D7","num":7,"hex":"#8354B2"},{"code":"D8","num":8,"hex":"#E6D6FA"},{"code":"D9","num":9,"hex":"#D4BBF6"},{"code":"D10","num":10,"hex":"#331B4B"},{"code":"D11","num":11,"hex":"#BDBAE3"},{"code":"D12","num":12,"hex":"#E192C4"},{"code":"D13","num":13,"hex":"#AC0E82"},{"code":"D14","num":14,"hex":"#832993"},{"code":"D15","num":15,"hex":"#351F85"},{"code":"D16","num":16,"hex":"#E7D5DB"},{"code":"D17","num":17,"hex":"#C7D3EE"},{"code":"D18","num":18,"hex":"#A164C4"},{"code":"D19","num":19,"hex":"#DDC3DC"},{"code":"D20","num":20,"hex":"#9339A4"},{"code":"D21","num":21,"hex":"#910894"},{"code":"D22","num":22,"hex":"#36388A"},{"code":"D23","num":23,"hex":"#ECE2FB"},{"code":"D24","num":24,"hex":"#7F85E2"},{"code":"D25","num":25,"hex":"#4A50BF"},{"code":"D26","num":26,"hex":"#E3C7F9"}]},{"prefix":"E","count":24,"colors":[{"code":"E1","num":1,"hex":"#FBD6D5"},{"code":"E2","num":2,"hex":"#FCC6E0"},{"code":"E3","num":3,"hex":"#FCB8E3"},{"code":"E4","num":4,"hex":"#E6689E"},{"code":"E5","num":5,"hex":"#F554A0"},{"code":"E6","num":6,"hex":"#E94176"},{"code":"E7","num":7,"hex":"#C53372"},{"code":"E8","num":8,"hex":"#FAE1EC"},{"code":"E9","num":9,"hex":"#E772CB"},{"code":"E10","num":10,"hex":"#CC3B91"},{"code":"E11","num":11,"hex":"#FBE0D6"},{"code":"E12","num":12,"hex":"#F791C2"},{"code":"E13","num":13,"hex":"#A60F5E"},{"code":"E14","num":14,"hex":"#F5C5B9"},{"code":"E15","num":15,"hex":"#F7BFB6"},{"code":"E16","num":16,"hex":"#FCE4E1"},{"code":"E17","num":17,"hex":"#FCE9EB"},{"code":"E18","num":18,"hex":"#F9CBDE"},{"code":"E19","num":19,"hex":"#FBBED8"},{"code":"E20","num":20,"hex":"#DECAD1"},{"code":"E21","num":21,"hex":"#BB9EA7"},{"code":"E22","num":22,"hex":"#B3889D"},{"code":"E23","num":23,"hex":"#947988"},{"code":"E24","num":24,"hex":"#DDBDE6"}]},{"prefix":"F","count":25,"colors":[{"code":"F1","num":1,"hex":"#FA977D"},{"code":"F2","num":2,"hex":"#F73E4C"},{"code":"F3","num":3,"hex":"#F64C47"},{"code":"F4","num":4,"hex":"#F42A3C"},{"code":"F5","num":5,"hex":"#E1072B"},{"code":"F6","num":6,"hex":"#953330"},{"code":"F7","num":7,"hex":"#951A37"},{"code":"F8","num":8,"hex":"#B6062B"},{"code":"F9","num":9,"hex":"#E0697A"},{"code":"F10","num":10,"hex":"#86482C"},{"code":"F11","num":11,"hex":"#57211D"},{"code":"F12","num":12,"hex":"#F4526A"},{"code":"F13","num":13,"hex":"#E85C51"},{"code":"F14","num":14,"hex":"#F5A09A"},{"code":"F15","num":15,"hex":"#CA0C25"},{"code":"F16","num":16,"hex":"#FBC3AF"},{"code":"F17","num":17,"hex":"#E89D82"},{"code":"F18","num":18,"hex":"#CF804E"},{"code":"F19","num":19,"hex":"#BF454A"},{"code":"F20","num":20,"hex":"#CE9294"},{"code":"F21","num":21,"hex":"#F5B7C6"},{"code":"F22","num":22,"hex":"#FAC3D0"},{"code":"F23","num":23,"hex":"#ED8173"},{"code":"F24","num":24,"hex":"#E59BAD"},{"code":"F25","num":25,"hex":"#DE5251"}]},{"prefix":"G","count":21,"colors":[{"code":"G1","num":1,"hex":"#FDE6D3"},{"code":"G2","num":2,"hex":"#FACBB1"},{"code":"G3","num":3,"hex":"#F4C7AD"},{"code":"G4","num":4,"hex":"#E1B48B"},{"code":"G5","num":5,"hex":"#EEB153"},{"code":"G6","num":6,"hex":"#E49C35"},{"code":"G7","num":7,"hex":"#995C3D"},{"code":"G8","num":8,"hex":"#6F3A33"},{"code":"G9","num":9,"hex":"#E6B48D"},{"code":"G10","num":10,"hex":"#CF8F49"},{"code":"G11","num":11,"hex":"#E2C59F"},{"code":"G12","num":12,"hex":"#F5C090"},{"code":"G13","num":13,"hex":"#B36D4F"},{"code":"G14","num":14,"hex":"#955E4D"},{"code":"G15","num":15,"hex":"#F8EFDC"},{"code":"G16","num":16,"hex":"#EFD0B9"},{"code":"G17","num":17,"hex":"#79514A"},{"code":"G18","num":18,"hex":"#FDE5D3"},{"code":"G19","num":19,"hex":"#D87A42"},{"code":"G20","num":20,"hex":"#9D462E"},{"code":"G21","num":21,"hex":"#B98462"}]},{"prefix":"H","count":23,"colors":[{"code":"H1","num":1,"hex":"#FEFBFD"},{"code":"H2","num":2,"hex":"#FBFEFE"},{"code":"H3","num":3,"hex":"#B6B4B9"},{"code":"H4","num":4,"hex":"#89878D"},{"code":"H5","num":5,"hex":"#474749"},{"code":"H6","num":6,"hex":"#2E2C2A"},{"code":"H7","num":7,"hex":"#020100"},{"code":"H8","num":8,"hex":"#E5D9DD"},{"code":"H9","num":9,"hex":"#F3ECF3"},{"code":"H10","num":10,"hex":"#F3EAEE"},{"code":"H11","num":11,"hex":"#D4CFD5"},{"code":"H12","num":12,"hex":"#FCE4E0"},{"code":"H13","num":13,"hex":"#F4DECC"},{"code":"H14","num":14,"hex":"#D4D6CD"},{"code":"H15","num":15,"hex":"#A0A5A0"},{"code":"H16","num":16,"hex":"#211411"},{"code":"H17","num":17,"hex":"#F7E9E6"},{"code":"H18","num":18,"hex":"#FDFBF5"},{"code":"H19","num":19,"hex":"#F6F4EC"},{"code":"H20","num":20,"hex":"#9C9CA0"},{"code":"H21","num":21,"hex":"#FDFBE9"},{"code":"H22","num":22,"hex":"#D0CBD0"},{"code":"H23","num":23,"hex":"#9A9E93"}]},{"prefix":"M","count":15,"colors":[{"code":"M1","num":1,"hex":"#C0C6C0"},{"code":"M2","num":2,"hex":"#90A08B"},{"code":"M3","num":3,"hex":"#6D7C7B"},{"code":"M4","num":4,"hex":"#E6D5C5"},{"code":"M5","num":5,"hex":"#D6CDB4"},{"code":"M6","num":6,"hex":"#B4A78D"},{"code":"M7","num":7,"hex":"#B4A49C"},{"code":"M8","num":8,"hex":"#AC8482"},{"code":"M9","num":9,"hex":"#A3896D"},{"code":"M10","num":10,"hex":"#C7B6BF"},{"code":"M11","num":11,"hex":"#9B7D8E"},{"code":"M12","num":12,"hex":"#6D4848"},{"code":"M13","num":13,"hex":"#CF9777"},{"code":"M14","num":14,"hex":"#C57968"},{"code":"M15","num":15,"hex":"#7A807B"}]}]};
+
+/* ===================== 色号主数据（内置只读） ===================== */
+const COLORS = [], BY_CODE = {}, FAMILIES = [];
+DATA.series.forEach(s => {
+  FAMILIES.push(s.prefix);
+  s.colors.forEach(c => {
+    const o = { code: c.code, family: s.prefix, num: c.num, hex: c.hex };
+    COLORS.push(o); BY_CODE[c.code] = o;
+  });
+});
+
+/* ===================== 状态 ===================== */
+const KEY = 'bean-stock-v5';
+
+function blank(){ return { types: [], stock: {}, logs: [], seq: 10 }; }
+
+function seed(){
+  const s = blank(), now = Date.now(), D = 86400000;
+  s.types = [
+    // swatch：这个牌子下按实物校正过的色值（只影响该品牌的色块显示）
+    { id:'t1', brand:'MARD 原厂', dia:2.6, label:'迷你', gpb:0.0190, cn:60, cm:1.14, cat: now-D*3,
+      swatch:{ A21:'#E9B7B1' } },
+    { id:'t2', brand:'散装', dia:2.6, label:'', gpb:null, cn:0, cm:null, cat:null }
+  ];
+  [ ['t1','A21',{net:37.8,src:'w',state:'m',at:now-D*2}],
+    ['t1','A1',{net:30.0,src:'w',state:'m',at:now-D*2}],
+    ['t1','A9',{net:15.2,src:'w',state:'m',at:now-D*5}],
+    ['t1','B9',{net:12.0,src:'w',state:'e',at:now-D*6}],
+    ['t1','H7',{net:8.5,src:'w',state:'m',at:now-D*8}],
+    ['t1','M3',{net:21.4,src:'w',state:'m',at:now-D*9}],
+    // 只有颗数、没称过重（这个型号还没标定颗重）
+    ['t2','A21',{cnt:1600,src:'c',state:'e',at:now-D*9}]
+  ].forEach(([tid, code, v]) => { s.stock[tid+'|'+code] = v; });
+
+  s.logs = [
+    { ts:now-D*2, tid:'t1', code:'A21', type:'SET', note:'设为 37.8 g（称重），约 1989 颗' },
+    { ts:now-D*2, tid:'t1', code:'A1',  type:'SET', note:'设为 30.0 g（称重），约 1579 颗' },
+    { ts:now-D*3, tid:'t1', code:null,  type:'CALIBRATE', note:'标定 MARD 原厂 · 2.6mm：60 颗 1.14 g → 0.0190 g/颗' },
+    { ts:now-D*6, tid:'t1', code:'B9',  type:'SUB', note:'扣减 25 颗 → 12.0 g' },
+    { ts:now-D*9, tid:'t2', code:'A21', type:'SET', note:'记为 1600 颗（未标定颗重，暂无重量）' }
+  ];
+  return s;
+}
+
+function load(){
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return seed();
+    const o = JSON.parse(raw);
+    return { types:o.types||[], stock:o.stock||{}, logs:o.logs||[], seq:o.seq||10 };
+  } catch(e){ return seed(); }
+}
+function save(){ localStorage.setItem(KEY, JSON.stringify(S)); }
+let S = load();
+
+/* ===================== 工具 ===================== */
+const $ = id => document.getElementById(id);
+
+function lum(hex){
+  const f = c => { c/=255; return c <= 0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4); };
+  return .2126*f(parseInt(hex.slice(1,3),16)) + .7152*f(parseInt(hex.slice(3,5),16)) + .0722*f(parseInt(hex.slice(5,7),16));
+}
+function textStyle(hex){
+  return lum(hex) > 0.42 ? 'color:#1a1a1a' : 'color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5)';
+}
+function hexOf(code){ return BY_CODE[code].hex; }
+/** MARD 标准色（内置，不可改） */
+function hexStd(code){ return BY_CODE[code].hex; }
+/** 某型号下该色号的实际色值：用户按实物校正过就用它，否则用 MARD 标准色 */
+function hexFor(tid, code){
+  const t = tid ? typeOf(tid) : null;
+  return (t && t.swatch && t.swatch[code]) || BY_CODE[code].hex;
+}
+function fmt(n,d=2){ return Number(n||0).toLocaleString('zh-CN',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+function intFmt(n){ return Number(n||0).toLocaleString('zh-CN'); }
+function dayStr(ts){
+  if (!ts) return '—';
+  const d = new Date(ts), p = n => String(n).padStart(2,'0');
+  return `${p(d.getMonth()+1)}-${p(d.getDate())}`;
+}
+function timeStr(ts){
+  if (!ts) return '—';
+  const d = new Date(ts), p = n => String(n).padStart(2,'0');
+  return `${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function typeOf(id){ return S.types.find(t => t.id === id); }
+function typeLabel(t){ return t.brand + ' · ' + String(t.dia).replace(/\.0$/,'') + 'mm'; }
+function skuOf(tid, code){ return S.stock[tid + '|' + code] || null; }
+
+/**
+ * 库存项的真实状态。
+ * src='w'：重量是权威值（称过），颗数由颗重推出来；
+ * src='c'：颗数是权威值（数出来的/只记了个数），重量由颗重推出来。
+ * 所以重新标定颗重时，按颗记的记录颗数不会变，按克称的记录会重算颗数。
+ */
+function statOf(t, it){
+  if (!it) return { net:null, cnt:0, est:false, has:false };
+  const gpb = (t && t.gpb > 0) ? t.gpb : 0;
+  if (it.src === 'c' && it.cnt > 0)
+    return { net: gpb ? it.cnt * gpb : null, cnt:it.cnt, est:gpb > 0, has:true };
+  if (it.net > 0)
+    return { net:it.net, cnt: gpb ? Math.round(it.net/gpb) : (it.cnt > 0 ? it.cnt : null),
+             est:false, has:true };
+  if (it.cnt > 0)
+    return { net: gpb ? it.cnt * gpb : null, cnt:it.cnt, est:gpb > 0, has:true };
+  return { net:null, cnt:0, est:false, has:false };
+}
+
+function agg(code){
+  let count=0, weight=0, brands=0, uncounted=0, hasEst=false, lastAt=null, noW=0;
+  S.types.forEach(t => {
+    const it = skuOf(t.id, code), s = statOf(t, it);
+    if (!s.has) return;
+    brands++;
+    if (s.net !== null) weight += s.net; else noW++;
+    if (s.cnt !== null) count += s.cnt; else uncounted++;
+    if (s.est) hasEst = true;
+    if (it.at && (!lastAt || it.at > lastAt)) lastAt = it.at;
+  });
+  return { count, weight, brands, uncounted, hasEst, lastAt, noW };
+}
+function totalCount(){ let n = 0; COLORS.forEach(c => { n += agg(c.code).count; }); return n; }
+function stockedColors(){ let n = 0; COLORS.forEach(c => { if (agg(c.code).weight > 0) n++; }); return n; }
+const TYPE_CN = { SET:'设为', SUB:'扣减', ADD:'增加', CALIBRATE:'标定',
+                  COLOR_FIX:'改色', BRAND_NEW:'新品牌', BRAND_EDIT:'改品牌', ARCHIVE:'删除' };
+function logIt(tid, code, type, note){
+  S.logs.unshift({ ts:Date.now(), tid, code, type, note });
+  if (S.logs.length > 500) S.logs.length = 500;
+}
+
+/* ===================== 视图状态 ===================== */
+let tab = 'stock';
+let filter = 'all';
+let sortMode = 'code';      // 'code' 按系列+编号 / 'recent' 最近操作在前
+let pickedCode = null;      // 点选搜索最后定位到的色号，仅用于按钮上的回显
+let curCode = null;
+let curType = null;
+
+/* ===================== ① 库存页 ===================== */
+const SORT_ICO = {
+  code:   '<path d="M4 5.6h12M4 10h8.4M4 14.4h5.2"/>',
+  recent: '<circle cx="10" cy="10" r="6.3"/><path d="M10 6.1V10l2.7 1.7"/>'
+};
+
+function renderSort(){
+  $('sort-ico').innerHTML = SORT_ICO[sortMode];
+  $('btn-sort').classList.toggle('on', sortMode === 'recent');
+  $('btn-sort').setAttribute('aria-label',
+    sortMode === 'code' ? '当前按色号排序，点击切为最近操作' : '当前按最近操作排序，点击切为色号顺序');
+  const lab = $('pick-label');
+  lab.innerHTML = pickedCode
+    ? `<span class="v">${pickedCode}</span>`
+    : '定位色号';
+}
+
+function renderStock(){
+  $('s-sub').textContent = `${stockedColors()} 个色号 · ${intFmt(totalCount())} 颗`;
+  renderSort();
+  renderFambar();
+  renderGrid();
+}
+
+function renderFambar(){
+  const has = stockedColors();
+  const items = [{ k:'all', label:'全部', n:COLORS.length, h:has },
+                 { k:'stock', label:'有货', n:has, h:has }];
+  FAMILIES.forEach(f => {
+    const inFam = COLORS.filter(c => c.family === f);
+    items.push({ k:f, label:f, n:inFam.length,
+                 h:inFam.filter(c => agg(c.code).weight > 0).length });
+  });
+  $('fambar').innerHTML = items.map(it => {
+    const cnt = (it.k === 'all' || it.k === 'stock') ? it.n : (it.h > 0 ? it.h : it.n);
+    return `<button class="chip${filter === it.k ? ' on' : ''}${it.h > 0 ? ' has' : ''}" data-f="${it.k}">
+              ${it.label}<em>${cnt}</em></button>`;
+  }).join('');
+  $('fambar').querySelectorAll('.chip').forEach(b => {
+    b.onclick = () => { filter = b.dataset.f; renderFambar(); renderGrid(); };
+  });
+}
+
+function visibleColors(){
+  let list = COLORS;
+  if (filter === 'stock') list = list.filter(c => agg(c.code).brands > 0);
+  else if (filter !== 'all') list = list.filter(c => c.family === filter);
+
+  const ord = {}; FAMILIES.forEach((f,i) => ord[f] = i);
+  return list.slice().sort((a,b) => {
+    if (sortMode === 'recent'){
+      const rt = agg(a.code).lastAt || 0, rb = agg(b.code).lastAt || 0;
+      if (rt !== rb) return rb - rt;
+    }
+    return ord[a.family]-ord[b.family] || a.num-b.num;
+  });
+}
+
+function renderGrid(){
+  const list = visibleColors(), g = $('grid');
+  if (!list.length){
+    g.innerHTML = `<div class="empty" style="grid-column:1/-1">${
+      filter === 'stock'
+        ? '还没有任何库存<br><span style="font-size:12px;color:var(--faint)">切到「全部」点任意色号开始入库</span>'
+        : '没有匹配的色号'}</div>`;
+    return;
+  }
+  g.innerHTML = list.map(c => {
+    const a = agg(c.code), hx = hexOf(c.code);
+    let qty = '';
+    if (a.brands > 0){
+      const txt = a.count > 0
+        ? (a.uncounted > 0 ? '≈' : '') + intFmt(a.count)
+        : '—';
+      qty = `<span class="qty${a.hasEst ? ' est' : ''}">${txt}</span>`;
+    }
+    return `<button class="bead${a.brands > 0 ? ' hasq' : ''}" data-code="${c.code}"
+              style="background:${hx};${textStyle(hx)}">
+              <span class="code">${c.code}</span>${qty}
+              ${a.brands > 1 ? '<i class="multi"></i>' : ''}
+            </button>`;
+  }).join('');
+  g.querySelectorAll('.bead').forEach(b => {
+    b.onclick = () => { curCode = b.dataset.code; pickedCode = curCode; openColor(); };
+  });
+}
+
+/* ===================== 色号详情页 ===================== */
+function openColor(){
+  const hx = hexOf(curCode), a = agg(curCode);
+  $('color-title').textContent = curCode;
+
+  const rows = S.types.map(t => {
+    const it = skuOf(t.id, curCode), s = statOf(t, it);
+    const thx = hexFor(t.id, curCode);          // 这个牌子下的实际颜色
+    const tag = !s.has ? ''
+      : (it.state === 'e' || s.est
+          ? '<span class="tag e">估算</span>' : '<span class="tag m">实测</span>');
+
+    let sub;
+    if (!s.has) sub = '未入库 · 点此录入';
+    else if (s.est) sub = `≈${fmt(s.net)} g（按 ${intFmt(s.cnt)} 颗推算）`;
+    else if (s.net !== null)
+      sub = `${fmt(s.net)} g · ${it.state === 'm' ? '称于' : '记于'} ${dayStr(it.sat || it.at)}`;
+    else sub = '只有颗数，没称过重';
+
+    return `<div class="item" data-tid="${t.id}">
+      <div class="sw" style="background:${thx};${textStyle(thx)}">${curCode.replace(/[A-Z]/g,'')}</div>
+      <div class="mid">
+        <b>${typeLabel(t)} ${tag}</b>
+        <small>${sub}</small>
+      </div>
+      <div class="right">
+        ${s.cnt === null ? '<b style="color:#c9ced6">—</b>' : `<b>${intFmt(s.cnt)}</b><small>颗</small>`}
+      </div>
+      <span class="arrow">›</span>
+    </div>`;
+  }).join('');
+
+  const logs = S.logs.filter(l => l.code === curCode).slice(0, 5);
+  const wTxt = a.weight > 0
+    ? (a.noW > 0 ? '≥' : (a.hasEst ? '≈' : '')) + fmt(a.weight) + ' g'
+    : '—';
+
+  $('color-body').innerHTML = `
+    <div class="hero">
+      <div class="big" style="background:${hx};${textStyle(hx)}">${curCode}</div>
+      <div class="mid">
+        <div class="n">${a.uncounted > 0 ? '≈' : ''}${intFmt(a.count)}<span>颗</span></div>
+        <div class="g">${wTxt} · ${a.brands} 个品牌</div>
+      </div>
+    </div>
+
+    <div class="sect-t">各品牌库存<span class="sp">点一行更新</span></div>
+    <div class="grp">${rows}</div>
+    ${a.noW > 0 ? `<div style="font-size:11.5px;color:var(--muted);padding:8px 2px 0;line-height:1.6">
+      有 ${a.noW} 个型号只记了颗数，重量合计里没算它。</div>` : ''}
+    ${a.uncounted > 0 ? `<div style="font-size:11.5px;color:var(--warn);padding:6px 2px 0;line-height:1.6">
+      有 ${a.uncounted} 个型号有重量但没标定颗重，颗数合计只算了能换算的部分。</div>` : ''}
+
+    ${logs.length ? `<div class="sect-t">最近记录</div>
+    <div class="grp">${logs.map(l => {
+      const t = typeOf(l.tid);
+      return `<div class="log"><div class="t">${dayStr(l.ts)}</div>
+        <div class="c"><em>${t ? t.brand : '—'}</em> ${l.note}</div></div>`;
+    }).join('')}</div>` : ''}
+  `;
+
+  $('color-body').querySelectorAll('.item').forEach(el => {
+    el.onclick = () => openUpdate(el.dataset.tid, curCode);
+  });
+
+  $('p-color').classList.add('on');
+}
+$('color-back').onclick = () => $('p-color').classList.remove('on');
+
+/* ===================== 数字键盘（自绘，不调系统输入法） ===================== */
+/**
+ * 覆盖在 sheet 之上的一层数字键盘。只有 0–9、小数点和退格，配取消/确定。
+ * opts: { title, unit, decimal, maxInt, value, onOk }
+ */
+function numPad(opts){
+  const dec = opts.decimal !== false;
+  const maxInt = opts.maxInt || 6;
+  let str = (opts.value === null || opts.value === undefined) ? '' : String(opts.value);
+
+  const layer = document.createElement('div');
+  layer.className = 'padlayer on';
+  layer.innerHTML = `
+    <div class="padhd">
+      <div class="t">${opts.title || ''}</div>
+      <div class="v ph" id="pd-v"><span id="pd-t">0</span><em>${opts.unit || ''}</em></div>
+    </div>
+    <div class="padspacer"></div>
+    <div class="pad">
+      ${['1','2','3','4','5','6','7','8','9','.','0','bksp'].map(k =>
+        k === 'bksp'
+          ? `<button type="button" class="fn" data-k="bksp">⌫</button>`
+          : `<button type="button" data-k="${k}">${k}</button>`
+      ).join('')}
+    </div>
+    <div class="acts" style="padding:12px 0 0">
+      <button class="btn" id="pd-c">取消</button>
+      <button class="btn pri" id="pd-ok">确定</button>
+    </div>
+  `;
+  $('sheet').appendChild(layer);
+
+  const vEl = layer.querySelector('#pd-v'), tEl = layer.querySelector('#pd-t');
+  const dotBtn = layer.querySelector('[data-k="."]');
+
+  const show = () => {
+    tEl.textContent = str === '' ? '0' : str;
+    vEl.classList.toggle('ph', str === '');
+    dotBtn.disabled = !dec || str.includes('.');
+  };
+
+  const push = ch => {
+    if (ch === '.'){
+      if (!dec || str.includes('.')) return;
+      str = str === '' ? '0.' : str + '.';
+    } else {
+      if (str.includes('.')){
+        if (str.split('.')[1].length >= 2) return;         // 最多两位小数
+      } else {
+        if (str.replace('.','').length >= maxInt) return;   // 上限位数
+        if (str === '0') str = '';                          // 去掉前导 0
+      }
+      str += ch;
+    }
+    show();
+  };
+
+  layer.querySelectorAll('.pad button').forEach(b => {
+    b.onclick = () => {
+      const k = b.dataset.k;
+      if (k === 'bksp'){ str = str.slice(0, -1); show(); return; }
+      push(k);
+    };
+  });
+  show();
+
+  const close = () => layer.remove();
+  layer.querySelector('#pd-c').onclick = close;
+  layer.querySelector('#pd-ok').onclick = () => {
+    if (str === '' || str === '.'){ vEl.style.borderBottomColor = '#dc2626'; return; }
+    const v = parseFloat(str);
+    if (!(v >= 0)){ vEl.style.borderBottomColor = '#dc2626'; return; }
+    close();
+    opts.onOk(v);
+  };
+}
+
+/* ===================== 更新库存 sheet ===================== */
+let up = { tid:null, code:null, op:'sub', unit:'pcs', v:null };
+/** 因"要先标定"而中断的更新上下文，标定完自动回到这里 */
+let pendingBack = null;
+
+function openUpdate(tid, code, opt){
+  const t = typeOf(tid), it = skuOf(tid, code), s = statOf(t, it);
+  const canW = t.gpb > 0;
+  const wantUnit = opt && opt.unit === 'g' && canW ? 'g' : 'pcs';
+
+  up = { tid, code, op: s.has ? 'sub' : 'set', unit: wantUnit, v:null };
+
+  const nowTxt = !s.has ? '还没有记录'
+    : `当前 <b>${intFmt(s.cnt || 0)}</b> 颗` +
+      (s.net !== null ? `${s.est ? ' · ≈' : ' · '}${fmt(s.net)} g` : ' · 未称重');
+
+  sheet(`
+    <div class="sh">
+      <h3>${typeLabel(t)} · ${code}</h3>
+      <p>${nowTxt}${canW
+        ? ` · 颗重 ${t.gpb.toFixed(4)} g`
+        : ' · <span style="color:var(--warn)">未标定颗重</span>'}</p>
+    </div>
+    <div class="sb">
+      <div class="lbl">操作</div>
+      <div class="seg" id="seg-op">
+        <button data-op="sub"${up.op === 'sub' ? ' class="on"' : ''}>扣减</button>
+        <button data-op="add"${up.op === 'add' ? ' class="on"' : ''}>增加</button>
+        <button data-op="set"${up.op === 'set' ? ' class="on"' : ''}>设为</button>
+      </div>
+
+      <div class="lbl">单位</div>
+      <div class="seg" id="seg-unit">
+        <button data-unit="pcs"${up.unit === 'pcs' ? ' class="on"' : ''}>颗</button>
+        <button data-unit="g"${up.unit === 'g' ? ' class="on"' : ''}>克${canW ? '' : ' 🔒'}</button>
+      </div>
+
+      <div class="lbl">数量</div>
+      <div class="numfield" id="up-field">
+        <span class="v ph" id="up-disp">点此输入</span>
+        <span class="u" id="up-u">颗</span>
+      </div>
+
+      <div class="prev" id="up-prev">点上面的输入框，用自带键盘填数量</div>
+    </div>
+    <div class="acts">
+      <button class="btn" id="up-cancel">取消</button>
+      <button class="btn pri" id="up-ok">确定</button>
+    </div>
+  `);
+
+  function paint(){
+    $('up-u').textContent = up.unit === 'pcs' ? '颗' : 'g';
+    document.querySelectorAll('#seg-op button').forEach(b =>
+      b.classList.toggle('on', b.dataset.op === up.op));
+    document.querySelectorAll('#seg-unit button').forEach(b =>
+      b.classList.toggle('on', b.dataset.unit === up.unit));
+
+    const disp = $('up-disp');
+    if (up.v === null){
+      disp.textContent = '点此输入'; disp.classList.add('ph');
+    } else {
+      disp.textContent = up.unit === 'g' ? fmt(up.v, 2) : intFmt(up.v);
+      disp.classList.remove('ph');
+    }
+
+    const p = calcUpdate(t, s);
+    const box = $('up-prev');
+    if (!p){ box.innerHTML = '点上面的输入框，用自带键盘填数量'; return; }
+
+    const measure = (up.op === 'set' && up.unit === 'g');
+    let html = up.unit === 'g'
+      ? `<b>${fmt(s.net || 0)} g</b> → <b>${fmt(p.net)} g</b>`
+      : `<b>${intFmt(s.cnt || 0)}</b> → <b>${intFmt(p.cnt)}</b> 颗`;
+
+    if (canW) html += up.unit === 'g'
+      ? `　约 <b>${intFmt(p.cnt)}</b> 颗`
+      : `　约 <b>${fmt(p.net)}</b> g`;
+    html += `<br>${measure
+      ? '记为 <b>实测</b>（称过就是真值）'
+      : (canW ? '<span class="w">记为估算</span>（按颗重推算，误差会累积）'
+              : '只记颗数，不计重量')}`;
+    if (p.over) html += '<br><span class="w">超出当前库存，将按 0 处理</span>';
+    box.innerHTML = html;
+  }
+
+  $('up-field').onclick = () => numPad({
+    title: `${typeLabel(t)} · ${code}　${up.unit === 'pcs' ? '按颗' : '按重量'}`,
+    unit: up.unit === 'pcs' ? '颗' : 'g',
+    decimal: up.unit === 'g',
+    value: up.v,
+    onOk: v => { up.v = v; paint(); }
+  });
+
+  document.querySelectorAll('#seg-op button').forEach(b => {
+    b.onclick = () => { up.op = b.dataset.op; paint(); };
+  });
+  document.querySelectorAll('#seg-unit button').forEach(b => {
+    b.onclick = () => {
+      if (b.dataset.unit === 'g' && !canW){
+        pendingBack = { tid, code };
+        needCalibrate(t);
+        return;
+      }
+      up.unit = b.dataset.unit; paint();
+    };
+  });
+
+  $('up-cancel').onclick = () => { pendingBack = null; closeSheet(); };
+  $('up-ok').onclick = () => {
+    const p = calcUpdate(t, s);
+    if (!p){
+      const f = $('up-field');
+      f.style.borderColor = '#dc2626';
+      setTimeout(() => { f.style.borderColor = ''; }, 900);
+      return;
+    }
+    commitUpdate(t, code, p);
+    closeSheet();
+  };
+  paint();
+}
+
+/** 未标定时想按克记账 → 引导去标定，标完回到原来的更新抽屉 */
+function needCalibrate(t){
+  sheet(`
+    <div class="sh">
+      <h3>按重量记账要先标定</h3>
+      <p>有颗重才能把克数换成颗数。标一次，${typeLabel(t)} 下所有色号通用。</p>
+    </div>
+    <div class="sb">
+      <div class="prev" style="margin-top:0">
+        数出 <b>${suggestSampleN(t.dia)} 颗</b>豆子称一次净重即可，
+        或者包装上标了颗数就直接整包称重——后者更准，还不用数。
+      </div>
+      <div class="lbl">现在要做什么</div>
+      <div class="prev" style="margin-top:0;background:#fff">
+        标定后自动回到这个色号的录入界面，单位已经是「克」。
+      </div>
+    </div>
+    <div class="acts">
+      <button class="btn" id="nc-later">先按颗记</button>
+      <button class="btn pri" id="nc-go">去标定</button>
+    </div>
+  `);
+  $('nc-later').onclick = () => { pendingBack = null; closeSheet(); };
+  $('nc-go').onclick = () => {
+    const back = pendingBack;
+    closeSheet();
+    setTimeout(() => openCalibrate(t, back), 200);
+  };
+}
+
+function calcUpdate(t, s){
+  const v = up.v;
+  if (v === null) return null;
+  const gpb = t.gpb > 0 ? t.gpb : 0;
+  let cnt, net, over = false;
+
+  if (up.unit === 'g'){
+    const base = s.net || 0;
+    const after = up.op === 'set' ? v : (up.op === 'sub' ? base - v : base + v);
+    over = after < 0;
+    net = Math.max(0, after);
+    cnt = gpb ? Math.round(net / gpb) : 0;
+  } else {
+    const base = s.cnt || 0;
+    const after = up.op === 'set' ? v : (up.op === 'sub' ? base - v : base + v);
+    over = after < 0;
+    cnt = Math.max(0, Math.round(after));
+    net = gpb ? cnt * gpb : 0;
+  }
+  return { cnt, net, v, over };
+}
+
+function commitUpdate(t, code, p){
+  const key = t.id + '|' + code;
+  const it = skuOf(t.id, code) || { state:'e', at:null, sat:null };
+  const measure = (up.op === 'set' && up.unit === 'g');
+  const now = Date.now();
+
+  if (up.unit === 'g'){
+    it.net = Math.round(p.net * 1000) / 1000;
+    it.src = 'w';
+    delete it.cnt;
+  } else {
+    it.cnt = p.cnt;
+    it.src = 'c';
+    if (t.gpb > 0) it.net = Math.round(p.cnt * t.gpb * 1000) / 1000;
+    else delete it.net;
+  }
+  it.state = measure ? 'm' : 'e';
+  it.at = now;                                  // 最近操作时间，排序用
+  if (measure) it.sat = now;                    // 最近一次真正称重
+  S.stock[key] = it;
+
+  const s2 = statOf(t, it);
+  const parts = [];
+  if (up.op === 'set'){
+    parts.push(up.unit === 'g'
+      ? `设为 ${fmt(it.net)} g（称重）`
+      : `盘点设为 ${intFmt(p.cnt)} 颗`);
+  } else {
+    parts.push(up.unit === 'g'
+      ? `${up.op === 'sub' ? '扣减' : '增加'} ${fmt(p.v, 2)} g → ${fmt(it.net)} g`
+      : `${up.op === 'sub' ? '扣减' : '增加'} ${intFmt(p.v)} 颗 → ${intFmt(p.cnt)} 颗`);
+  }
+  if (t.gpb > 0 && up.unit !== 'g') parts.push(`约 ${fmt(it.net)} g`);
+  else if (s2.cnt) parts.push(`约 ${intFmt(s2.cnt)} 颗`);
+  else parts.push('未标定颗重，不计颗数');
+
+  logIt(t.id, code, up.op === 'set' ? 'SET' : (up.op === 'sub' ? 'SUB' : 'ADD'),
+        parts.join('，'));
+
+  save();
+  curCode = code;                 // 保证详情页停在这一页，不管是从哪儿打开抽屉的
+  openColor(); renderStock();
+  if (tab === 'brand') renderBrands();
+  pickedCode = code;
+  renderSort();
+}
+
+/* ===================== ② 品牌页 ===================== */
+function renderBrands(){
+  $('b-sub').textContent = `${S.types.length} 个型号`;
+  const box = $('brand-body');
+  if (!S.types.length){
+    box.innerHTML = `<div class="empty">还没有品牌型号<br>
+      <span style="font-size:12px;color:var(--faint)">点右上角「新增」，标定颗重后即可按颗计数</span></div>`;
+    return;
+  }
+  box.innerHTML = `<div class="grp">` + S.types.map(t => {
+    let cnt = 0, weight = 0, colors = 0;
+    COLORS.forEach(c => {
+      const s = statOf(t, skuOf(t.id, c.code));
+      if (!s.has) return;
+      colors++;
+      if (s.net !== null) weight += s.net;
+      if (s.cnt !== null) cnt += s.cnt;
+    });
+    const tag = t.gpb > 0 ? '<span class="tag m">已标定</span>' : '<span class="tag e">未标定</span>';
+    return `<div class="item" data-tid="${t.id}">
+      <div class="ico" style="background:#eceef1;color:var(--muted);font-size:11px">${t.brand.slice(0,2)}</div>
+      <div class="mid">
+        <b>${typeLabel(t)} ${tag}</b>
+        <small>${colors} 个色号 · ${weight > 0 ? fmt(weight,1) + ' g' : '无重量'}${cnt > 0 ? ' · ' + intFmt(cnt) + ' 颗' : ''}</small>
+        <small style="color:var(--faint)">${t.gpb > 0 ? t.gpb.toFixed(4) + ' g/颗 · ' + (t.cat ? '标于 ' + dayStr(t.cat) : '') : '只能按颗记录，不能按重量'}</small>
+      </div>
+      <span class="arrow">›</span>
+    </div>`;
+  }).join('') + `</div>`;
+  box.querySelectorAll('.item').forEach(el => {
+    el.onclick = () => { curType = el.dataset.tid; openType(); };
+  });
+}
+
+/* ===================== 品牌详情页 ===================== */
+function openType(){
+  const t = typeOf(curType);
+  $('type-title').textContent = typeLabel(t);
+
+  let cnt = 0, weight = 0, colors = 0;
+  const stocked = [];
+  COLORS.forEach(c => {
+    const s = statOf(t, skuOf(t.id, c.code));
+    if (!s.has) return;
+    colors++; stocked.push(c.code);
+    if (s.net !== null) weight += s.net;
+    if (s.cnt !== null) cnt += s.cnt;
+  });
+
+  $('type-body').innerHTML = `
+    <div class="hero">
+      <div class="mid">
+        <div class="n">${cnt > 0 ? intFmt(cnt) : '—'}<span>颗</span></div>
+        <div class="g">${colors} 个色号 · ${weight > 0 ? fmt(weight,1) + ' g' : '无重量记录'}</div>
+      </div>
+    </div>
+
+    <div class="sect-t">颗重标定</div>
+    <div class="grp" style="padding:14px">
+      ${t.gpb > 0 ? `
+        <div style="display:flex;align-items:baseline;gap:8px">
+          <div style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.4px">
+            ${t.gpb.toFixed(4)}</div>
+          <div style="font-size:12px;color:var(--muted)">g / 颗</div>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.7">
+          标于 ${dayStr(t.cat)}　样本 ${t.cn} 颗 / ${fmt(t.cm)} g<br>
+          同品牌同直径共用这一个值，本型号下 ${COLORS.length} 个色号都按它换算。
+        </div>` : `
+        <div style="font-size:13px;color:var(--warn);line-height:1.7">
+          尚未标定。<br><span style="color:var(--muted);font-size:12px">
+          可以照常按颗记录；想用重量记账，得先标定一次。</span></div>`}
+      <button class="btn pri" id="btn-cal" style="margin-top:13px">${t.gpb > 0 ? '重新标定' : '去标定'}</button>
+    </div>
+
+    <div class="sect-t">实际色值<span class="sp">默认用 MARD 标准色</span></div>
+    ${stocked.length ? `<div class="grp">${stocked.map(code => {
+      const thx = hexFor(t.id, code), std = hexStd(code), diff = thx !== std;
+      const s = statOf(t, skuOf(t.id, code));
+      return `<div class="item" data-sw="${code}">
+        <div class="sw" style="background:${thx};${textStyle(thx)}">${code.replace(/[A-Z]/g,'')}</div>
+        <div class="mid">
+          <b>${code} <span class="tag ${diff ? 'm' : 'n'}">${diff ? '已校色' : '标准色'}</span></b>
+          <small>${s.cnt !== null ? intFmt(s.cnt) + ' 颗' : '—'}${s.net !== null ? ' · ' + fmt(s.net) + ' g' : ''}</small>
+        </div>
+        <span class="arrow">›</span>
+      </div>`;
+    }).join('')}</div>` : `<div class="grp" style="padding:14px;font-size:12.5px;color:var(--muted);line-height:1.7">
+      还没有入库的色号。入库之后，哪个颜色实物偏色就点进来挑一个更接近的。
+    </div>`}
+
+    <div class="sect-t">型号设置</div>
+    <div class="grp">
+      <div class="item" id="btn-edit">
+        <div class="mid"><b>编辑名称 / 直径</b><small>${typeLabel(t)}${t.label ? ' · ' + t.label : ''}</small></div>
+        <span class="arrow">›</span>
+      </div>
+      <div class="item" id="btn-del">
+        <div class="mid"><b style="color:var(--danger)">删除这个型号</b>
+          <small>${colors} 个色号有库存，删除会清空（日志保留）</small></div>
+      </div>
+    </div>
+  `;
+
+  $('btn-cal').onclick = () => openCalibrate(t);
+  $('btn-edit').onclick = () => openBrandEdit(t);
+  $('btn-del').onclick = () => {
+    if (colors > 0 && !confirm(`这个型号下还有 ${colors} 个色号有库存，删除会清空这些记录（日志保留）。确定？`)) return;
+    S.types = S.types.filter(x => x.id !== t.id);
+    Object.keys(S.stock).forEach(k => { if (k.startsWith(t.id + '|')) delete S.stock[k]; });
+    logIt(t.id, null, 'ARCHIVE', `删除品牌型号 ${typeLabel(t)}`);
+    save(); $('p-type').classList.remove('on');
+    renderBrands(); renderStock(); refreshAll();
+  };
+  $('type-body').querySelectorAll('[data-sw]').forEach(el => {
+    el.onclick = () => openSwatch(t, el.dataset.sw);
+  });
+
+  $('p-type').classList.add('on');
+}
+$('type-back').onclick = () => $('p-type').classList.remove('on');
+
+/* ===================== 单个色号的实际颜色 ===================== */
+function openSwatch(t, code){
+  const std = hexStd(code), cur = hexFor(t.id, code);
+
+  sheet(`
+    <div class="sh">
+      <h3>${code} 的实际颜色</h3>
+      <p>${typeLabel(t)} 这批实物看着是什么色。只影响这个牌子的色块显示，不动标准色卡。</p>
+    </div>
+    <div class="sb">
+      <div style="display:flex;gap:12px;align-items:center;margin-top:8px">
+        <div class="sw big" id="sw-prev" style="background:${cur};${textStyle(cur)}">${code}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600" id="sw-tip">
+            ${cur === std ? '当前是 MARD 标准色' : '已按实物校过'}</div>
+          <div style="font-size:11.5px;color:var(--muted);margin-top:3px">
+            标准色 ${std.toUpperCase()}</div>
+        </div>
+      </div>
+      <div class="lbl">挑一个更接近的颜色</div>
+      <input type="color" id="sw-in" value="${cur.toLowerCase()}"
+             style="width:100%;height:58px;padding:5px;border:1.5px solid var(--line);
+                    border-radius:12px;background:#fff">
+      <div style="font-size:11px;color:var(--faint);margin-top:9px;line-height:1.7">
+        点这个色块调出系统取色器，对着豆子或包装色卡取。各家同色号本来就有色差，
+        校准之后看库存就知道手里这袋到底长什么样。
+      </div>
+      <button class="inline-btn" id="sw-reset" style="margin-top:13px">恢复成标准色</button>
+    </div>
+    <div class="acts">
+      <button class="btn" id="sw-cancel">取消</button>
+      <button class="btn pri" id="sw-ok">保存</button>
+    </div>
+  `);
+
+  const inp = $('sw-in'), pv = $('sw-prev'), tip = $('sw-tip');
+  const preview = v => {
+    pv.style.background = v;
+    pv.style.color = lum(v) > 0.42 ? '#1a1a1a' : '#fff';
+    pv.style.textShadow = lum(v) > 0.42 ? 'none' : '0 1px 2px rgba(0,0,0,.5)';
+    tip.textContent = (v.toUpperCase() === std) ? '当前是 MARD 标准色' : '已按实物校过';
+  };
+  inp.oninput = () => preview(inp.value.toUpperCase());
+  $('sw-cancel').onclick = closeSheet;
+  $('sw-reset').onclick = () => { inp.value = std.toLowerCase(); preview(std); };
+  $('sw-ok').onclick = () => {
+    const hex = inp.value.toUpperCase();
+    t.swatch = t.swatch || {};
+    if (hex === std) delete t.swatch[code];
+    else t.swatch[code] = hex;
+    logIt(t.id, code, 'COLOR_FIX', hex === std
+      ? `${code} 恢复标准色`
+      : `${code} 实际色值记为 ${hex}`);
+    save(); closeSheet();
+    openType(); renderGrid(); renderStock();
+    if ($('p-color').classList.contains('on')) openColor();
+  };
+}
+
+/* ===================== 标定 sheet ===================== */
+
+/** 按直径粗估颗重，仅用于给"该用哪种秤 / 取几颗"的建议，不参与任何计算 */
+function roughGpb(dia){
+  if (dia <= 3.2) return 0.019;   // 2.6mm 迷你
+  if (dia <= 7)   return 0.090;   // 5mm 中豆
+  return 0.350;                   // 10mm 大豆
+}
+/** 迷你豆样本太小，必须多取几颗，否则秤的绝对误差会吞掉结果 */
+function suggestSampleN(dia){ return dia <= 3.2 ? 60 : 40; }
+
+function openCalibrate(t, back){
+  const defN = t.cn || suggestSampleN(t.dia);
+  const isMini = t.dia <= 3.2;
+  let calN = defN, calM = (t.cm > 0) ? t.cm : null;
+
+  sheet(`
+    <div class="sh">
+      <h3>标定 ${typeLabel(t)} 颗重</h3>
+      <p>取<b>随手抓</b>的 ${defN} 颗豆子，数清颗数，称净重。标一次该型号全色号通用。</p>
+    </div>
+    <div class="sb">
+      <div class="hint">
+        包装上标了颗数（如「1000 颗」）？把<b>整包称重</b>填进来，颗数填 1000——<b>不用数豆子，结果还更准</b>，因为完全没有数错的风险。
+      </div>
+      <div class="field"><label>颗数 N（数出来的，或包装标注）</label>
+        <div class="numfield" id="cal-nf">
+          <span class="v" id="cal-nv">${calN}</span><span class="u">颗</span>
+        </div></div>
+      <div class="field"><label>净重 m（克，已扣容器）</label>
+        <div class="numfield" id="cal-mf">
+          <span class="v${calM ? '' : ' ph'}" id="cal-mv">${calM ? fmt(calM) : '点此输入'}</span>
+          <span class="u">g</span>
+        </div></div>
+      <div class="prev" id="cal-out">填入两项后显示结果</div>
+    </div>
+    <div class="acts">
+      <button class="btn" id="cal-cancel">取消</button>
+      <button class="btn pri" id="cal-ok">保存</button>
+    </div>
+  `);
+
+  const paintN = () => {
+    const el = $('cal-nv');
+    el.textContent = calN > 0 ? intFmt(calN) : '点此输入';
+    el.classList.toggle('ph', !(calN > 0));
+  };
+  const paintM = () => {
+    const el = $('cal-mv');
+    el.textContent = calM > 0 ? fmt(calM) : '点此输入';
+    el.classList.toggle('ph', !(calM > 0));
+  };
+
+  const upd = () => {
+    const out = $('cal-out');
+    if (!(calN > 0) || !(calM > 0)){ out.textContent = '填入两项后显示结果'; return; }
+
+    const w = calM / calN;
+    const bag = 30;                       // 以 30g 一袋作参照
+    const cnt = bag / w;
+    // 秤的绝对误差 → 样本重的相对误差 → 折算到一袋的颗数误差
+    const errOf = p => Math.round(cnt * (p / calM));
+    const e01 = errOf(0.01), e10 = errOf(0.1);
+
+    out.innerHTML = `
+      颗重 <b>${w.toFixed(4)} g</b> / 颗 · ${bag} g 约 <b>${Math.round(cnt)}</b> 颗
+      <hr>
+      <div class="line"><span>用 0.01 g 秤</span>
+        <span class="${e01 <= 20 ? 'good' : 'bad'}">±${e01} 颗</span></div>
+      <div class="line"><span>用 0.1 g 厨房秤</span>
+        <span class="${e10 <= 20 ? 'good' : 'bad'}">±${e10} 颗</span></div>
+      ${e10 > 20 ? `<span class="w">${isMini ? '迷你豆' : '这个样本量'}下 0.1g 的秤不够用，误差已超出 ±20 颗预算</span>` : ''}
+      ${calN < suggestSampleN(t.dia) ? `<br><span class="w">建议至少 ${suggestSampleN(t.dia)} 颗，样本太轻会让秤误差被放大</span>` : ''}
+    `;
+  };
+
+  $('cal-nf').onclick = () => numPad({
+    title: `${typeLabel(t)}　样本颗数`, unit: '颗', decimal: false, value: calN,
+    onOk: v => { calN = Math.round(v); paintN(); upd(); }
+  });
+  $('cal-mf').onclick = () => numPad({
+    title: `${typeLabel(t)}　样本净重（已扣容器）`, unit: 'g', decimal: true,
+    value: calM, onOk: v => { calM = v; paintM(); upd(); }
+  });
+
+  paintN(); paintM(); upd();
+
+  $('cal-cancel').onclick = closeSheet;
+  $('cal-ok').onclick = () => {
+    if (!(calN > 0) || !(calM > 0)){
+      const bad = !(calN > 0) ? $('cal-nf') : $('cal-mf');
+      bad.style.borderColor = '#dc2626';
+      setTimeout(() => { bad.style.borderColor = ''; }, 900);
+      return;
+    }
+    const w = calM / calN;
+    t.gpb = w; t.cn = calN; t.cm = calM; t.cat = Date.now();
+    logIt(t.id, null, 'CALIBRATE', `标定 ${typeLabel(t)}：${calN} 颗 ${fmt(calM)} g → ${w.toFixed(4)} g/颗`);
+    save(); closeSheet();
+    if ($('p-type').classList.contains('on') && curType === t.id) openType();
+    renderBrands(); renderStock();
+    // 从"按克记账"被打断过来的，标定完原路回到那个色号
+    if (back) setTimeout(() => openUpdate(back.tid, back.code, { unit:'g' }), 220);
+    pendingBack = null;
+  };
+}
+
+/* ===================== 品牌编辑 sheet ===================== */
+
+/* 直径预设。迷你豆（2.6mm）在圈内最常见，作为新建默认值 */
+const DIAMETERS = [
+  { v: 2.6,  name: '迷你' },
+  { v: 5.0,  name: '中豆' },
+  { v: 10.0, name: '大豆' }
+];
+const DIA_DEFAULT = 2.6;
+
+function openBrandEdit(t){
+  const isNew = !t;
+  let dia = t ? t.dia : DIA_DEFAULT;
+  const hit = DIAMETERS.find(d => Math.abs(d.v - dia) < 1e-6);
+
+  sheet(`
+    <div class="sh">
+      <h3>${isNew ? '新增品牌型号' : '编辑品牌型号'}</h3>
+      <p>品牌是你自己的划分，随便起名。<b>2.6mm 迷你豆</b>是圈内主流，已默认选中。</p>
+    </div>
+    <div class="sb">
+      <div class="field"><label>品牌 / 来源</label>
+        <input type="text" id="b-brand" value="${t ? t.brand : ''}" placeholder="如 MARD 原厂、某宝散装"></div>
+      <div class="field"><label>直径（mm）</label>
+        <div class="dias" id="b-dias">
+          ${DIAMETERS.map(d => `<button type="button" class="dia${hit && hit.v === d.v ? ' on' : ''}" data-d="${d.v}">${String(d.v).replace(/\.0$/,'')}<em>${d.name}</em></button>`).join('')}
+          <button type="button" class="dia${hit ? '' : ' on'}" data-d="other">
+            ${hit ? '其他' : String(dia).replace(/\.0$/,'')}<em>${hit ? '&nbsp;' : '自定义'}</em>
+          </button>
+        </div>
+      </div>
+      <div class="field"><label>备注（中豆 / 迷你豆，可空）</label>
+        <input type="text" id="b-label" value="${t ? (t.label||'') : ''}"></div>
+    </div>
+    <div class="acts">
+      <button class="btn" id="b-cancel">取消</button>
+      <button class="btn pri" id="b-ok">${isNew ? '创建' : '保存'}</button>
+    </div>
+  `);
+  $('b-cancel').onclick = closeSheet;
+
+  const otherBtn = $('b-dias').querySelector('[data-d="other"]');
+  $('b-dias').querySelectorAll('.dia').forEach(b => {
+    b.onclick = () => {
+      if (b.dataset.d === 'other'){
+        $('b-dias').querySelectorAll('.dia').forEach(x => x.classList.toggle('on', x === b));
+        numPad({
+          title: '直径', unit: 'mm', decimal: true, value: dia,
+          onOk: v => {
+            dia = v;
+            otherBtn.innerHTML = `${String(v).replace(/\.0$/,'')}<em>自定义</em>`;
+          }
+        });
+        return;
+      }
+      dia = parseFloat(b.dataset.d);
+      $('b-dias').querySelectorAll('.dia').forEach(x => x.classList.toggle('on', x === b));
+    };
+  });
+
+  $('b-ok').onclick = () => {
+    const brand = $('b-brand').value.trim(), label = $('b-label').value.trim();
+    if (!brand) return alert('填个品牌名');
+    if (!(dia > 0)) return alert('直径要大于 0');
+    const dup = S.types.find(x => (!t || x.id !== t.id) && x.brand === brand && Math.abs(x.dia - dia) < 1e-6);
+    if (dup) return alert('已存在同品牌同直径的型号');
+
+    if (t){ t.brand = brand; t.dia = dia; t.label = label;
+            logIt(t.id, null, 'BRAND_EDIT', `改为 ${typeLabel(t)}`); }
+    else { const nt = { id:'t'+(S.seq++), brand, dia, label, gpb:null, cn:0, cm:null, cat:null, swatch:{} };
+           S.types.push(nt); logIt(null, null, 'BRAND_NEW', `新增型号 ${typeLabel(nt)}`); }
+    save(); closeSheet();
+    renderBrands(); renderStock();
+    if (!isNew && curType === t.id) openType();
+  };
+}
+
+/* ===================== ③ 日志页 ===================== */
+function renderLogs(){
+  $('l-sub').textContent = `${S.logs.length} 条`;
+  const box = $('log-body');
+  if (!S.logs.length){ box.innerHTML = '<div class="empty">暂无操作记录</div>'; return; }
+  box.innerHTML = `<div class="grp">` + S.logs.map(l => {
+    const t = typeOf(l.tid);
+    return `<div class="log">
+      <div class="t">${dayStr(l.ts)}</div>
+      <div class="c">${l.code ? '<b>' + l.code + '</b> ' : ''}${l.note}
+        ${t ? '<em>· ' + t.brand + '</em>' : ''}</div>
+    </div>`;
+  }).join('') + `</div>`;
+}
+
+/* ===================== 点选式色号定位 ===================== */
+const DIGITS = ['1','2','3','4','5','6','7','8','9','0'];
+
+function openPicker(){
+  const st = { fam:null, d1:null, d2:null };
+
+  sheet(`
+    <div class="sh">
+      <h3>定位色号</h3>
+      <p>顺序点：系列 → 数字 → 数字。位数点重了就是重选，不用删。</p>
+    </div>
+    <div class="sb">
+      <div class="lbl">① 系列</div>
+      <div class="picks" id="pk1"></div>
+      <div class="lbl">② 数字</div>
+      <div class="picks" id="pk2"></div>
+      <div class="lbl">③ 数字（可以跳过，直接点确定）</div>
+      <div class="picks" id="pk3"></div>
+      <div class="prev" id="pk-out" style="margin-top:12px">先点一个系列</div>
+      <div id="pk-match" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:6px;margin-bottom:4px"></div>
+    </div>
+    <div class="acts">
+      <button class="btn" id="pk-cancel">取消</button>
+      <button class="btn pri" id="pk-ok">确定</button>
+    </div>
+  `);
+
+  // 这个前缀下还有几个色号
+  const cntOf = p => p ? COLORS.filter(c => c.code.startsWith(p)).length : 0;
+  const prefix = () => (st.fam || '') + (st.d1 || '') + (st.d2 || '');
+  const matched = () => { const p = prefix(); return p ? COLORS.filter(c => c.code.startsWith(p)) : []; };
+
+  function paint(){
+    /* ① 系列：角标是这个系列里有货的色号数 */
+    $('pk1').innerHTML = FAMILIES.map(f => {
+      const has = COLORS.filter(c => c.family === f && agg(c.code).brands > 0).length;
+      return `<button type="button" class="pick sm${st.fam === f ? ' on' : ''}" data-f="${f}">
+                ${f}<em>${has || '·'}</em></button>`;
+    }).join('');
+
+    /* ② 第二位数字：不存在的位直接置灰，避免点空 */
+    if (!st.fam){
+      $('pk2').innerHTML = '<div style="font-size:12px;color:var(--faint);padding:2px">先选系列</div>';
+      $('pk3').innerHTML = '<div style="font-size:12px;color:var(--faint);padding:2px">先选系列</div>';
+    } else {
+      $('pk2').innerHTML = DIGITS.map(k => {
+        const n = cntOf(st.fam + k);
+        return `<button type="button" class="pick${st.d1 === k ? ' on' : ''}" data-d1="${k}"
+                  ${n ? '' : 'disabled'}>${k}<em>${n || ''}</em></button>`;
+      }).join('');
+      const p2 = st.fam + (st.d1 || '');
+      $('pk3').innerHTML = st.d1
+        ? DIGITS.map(k => {
+            const n = cntOf(p2 + k);
+            return `<button type="button" class="pick${st.d2 === k ? ' on' : ''}" data-d2="${k}"
+                      ${n ? '' : 'disabled'}>${k}<em>${n || ''}</em></button>`;
+          }).join('')
+        : '<div style="font-size:12px;color:var(--faint);padding:2px">先选第二位</div>';
+    }
+
+    /* 实时匹配 */
+    const list = matched(), exact = BY_CODE[prefix()];
+    const box = $('pk-match');
+    if (!st.fam){
+      box.innerHTML = '';
+      $('pk-out').innerHTML = '先点一个系列';
+    } else if (!list.length){
+      box.innerHTML = '';
+      $('pk-out').innerHTML = `<span class="w">${prefix()} 不存在，换个数字</span>`;
+    } else {
+      box.innerHTML = list.map(c => {
+        const hx = hexOf(c.code), a = agg(c.code);
+        return `<button type="button" class="bead${a.brands > 0 ? ' hasq' : ''}" data-code="${c.code}"
+                  style="background:${hx};${textStyle(hx)}">
+                  ${c.code}${a.brands > 0
+                    ? `<span class="qty">${a.count > 0 ? intFmt(a.count) : '—'}</span>` : ''}
+                </button>`;
+      }).join('');
+      box.querySelectorAll('.bead').forEach(b => {
+        b.onclick = () => { go(b.dataset.code); };
+      });
+
+      if (exact) $('pk-out').innerHTML = `就是 <b>${exact.code}</b>，点确定打开`;
+      else if (list.length === 1) $('pk-out').innerHTML = `只有一个 <b>${list[0].code}</b>，点确定打开`;
+      else $('pk-out').innerHTML = `<b>${prefix()}</b> 开头的有 ${list.length} 个，接着点第三位，或点下面的色块`;
+    }
+
+    /* 事件 */
+    $('pk1').querySelectorAll('.pick').forEach(b => {
+      b.onclick = () => {
+        if (st.fam === b.dataset.f) return;
+        st.fam = b.dataset.f; st.d1 = null; st.d2 = null; paint();
+      };
+    });
+    $('pk2').querySelectorAll('.pick').forEach(b => {
+      b.onclick = () => {
+        if (st.d1 === b.dataset.d1){ st.d1 = null; st.d2 = null; }   // 再点一次取消
+        else { st.d1 = b.dataset.d1; st.d2 = null; }
+        paint();
+      };
+    });
+    $('pk3').querySelectorAll('.pick').forEach(b => {
+      b.onclick = () => {
+        st.d2 = (st.d2 === b.dataset.d2) ? null : b.dataset.d2;
+        paint();
+      };
+    });
+  }
+
+  function go(code){
+    pickedCode = code;
+    closeSheet();
+    curCode = code;
+    setTimeout(openColor, 180);
+  }
+
+  $('pk-cancel').onclick = closeSheet;
+  $('pk-ok').onclick = () => {
+    const exact = BY_CODE[prefix()], list = matched();
+    if (exact) return go(exact.code);
+    if (list.length === 1) return go(list[0].code);
+    const box = $('pk-match');
+    box.animate?.(
+      [{ transform:'translateX(0)' }, { transform:'translateX(-5px)' },
+       { transform:'translateX(5px)' }, { transform:'translateX(0)' }],
+      { duration: 220 });
+    if (!list.length) $('pk-out').innerHTML = `<span class="w">还没选到有效色号</span>`;
+    else $('pk-out').innerHTML = `<span class="w">还有 ${list.length} 个，点下面的色块选一个</span>`;
+  };
+
+  paint();
+}
+
+/* ===================== sheet 控制 ===================== */
+function sheet(html){
+  const el = $('sheet');
+  el.innerHTML = `<div class="handle"></div>` + html;
+  el.scrollTop = 0;
+  el.classList.add('on');
+  $('scrim').classList.add('on');
+}
+function closeSheet(){
+  $('sheet').classList.remove('on');
+  $('scrim').classList.remove('on');
+}
+$('scrim').onclick = closeSheet;
+
+/* ===================== tab 切换 ===================== */
+document.querySelectorAll('.tabbar button').forEach(b => {
+  b.onclick = () => {
+    tab = b.dataset.tab;
+    document.querySelectorAll('.tabbar button').forEach(x => x.classList.toggle('on', x === b));
+    $('p-stock').classList.toggle('on', tab === 'stock');
+    $('p-brand').classList.toggle('on', tab === 'brand');
+    $('p-log').classList.toggle('on', tab === 'log');
+    if (tab === 'stock') renderStock();
+    if (tab === 'brand') renderBrands();
+    if (tab === 'log') renderLogs();
+  };
+});
+
+/* ===================== 顶部入口 ===================== */
+$('btn-pick').onclick = openPicker;
+$('btn-sort').onclick = () => {
+  sortMode = sortMode === 'code' ? 'recent' : 'code';
+  renderSort();
+  renderGrid();
+};
+$('btn-add-brand').onclick = () => openBrandEdit(null);
+
+function refreshAll(){ renderStock(); renderBrands(); renderLogs(); }
+refreshAll();
+
+/* ===================== 调试入口（仅截图核对用，不影响正常使用） ===================== */
+(function dev(){
+  const p = new URLSearchParams(location.search), d = p.get('dev');
+  if (!d) return;
+  const tap = t => document.querySelector(`.tabbar button[data-tab="${t}"]`).click();
+  if (d === 'color'){ curCode = p.get('c') || 'A21'; openColor(); }
+  if (d === 'sheet'){ curCode = p.get('c') || 'A21'; openColor();
+    setTimeout(() => openUpdate(p.get('t') || 't1', curCode), 30); }
+  if (d === 'pad'){ curCode = p.get('c') || 'A21'; openColor();
+    setTimeout(() => openUpdate(p.get('t') || 't1', curCode), 30);
+    setTimeout(() => document.getElementById('up-field').click(), 200); }
+  if (d === 'pick'){ setTimeout(openPicker, 30); }
+  if (d === 'cal'){ tap('brand'); curType = p.get('t') || 't2'; openType();
+    setTimeout(() => openCalibrate(typeOf(curType)), 60); }
+  if (d === 'sw'){ tap('brand'); curType = p.get('t') || 't1'; openType();
+    setTimeout(() => openSwatch(typeOf(curType), p.get('c') || 'A21'), 60); }
+  if (d === 'brand'){ tap('brand'); }
+  if (d === 'type'){ tap('brand'); curType = p.get('t') || 't1'; openType(); }
+  if (d === 'log'){ tap('log'); }
+})();
+</script>
+</body>
+</html>
