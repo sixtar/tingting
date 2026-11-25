@@ -224,6 +224,15 @@
   .chip.on em { opacity: .75; }
   .chip.has em { color: var(--accent); font-weight: 700; opacity: 1; }
   .chip.on.has em { color: #a8c1ff; }
+  /* 「预警」常驻：真有色号偏低时数字变红，没有时保持安静 */
+  .chip.chipwarn em { color: var(--faint); }
+  .chip.chipwarn.alarm em { color: #d93025; }
+  .chip.chipwarn.alarm.on em { color: #ffb3ab; }
+  .sublow {
+    border: 0; background: none; padding: 0; font: inherit; cursor: pointer;
+    color: #d93025; text-decoration: underline; text-decoration-style: dotted;
+    text-underline-offset: 3px;
+  }
 
   /* ---------- 色卡网格 ---------- */
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 7px; }
@@ -256,6 +265,13 @@
   }
 
   .empty { text-align: center; color: var(--muted); font-size: 13px; padding: 60px 20px; line-height: 1.9; }
+  .empty .em { font-size: 12px; color: var(--faint); }
+  .emptybtn {
+    margin-top: 14px; border: 1px solid var(--accent); background: var(--accent-soft);
+    color: var(--accent); border-radius: 9px; padding: 7px 16px;
+    font-size: 12.5px; font-weight: 600; cursor: pointer;
+  }
+  .emptybtn:active { background: #e2ebff; }
 
   /* ---------- 卡片列表 ---------- */
   .grp { background: var(--card); border-radius: 12px; overflow: hidden; margin-bottom: 10px; }
@@ -334,6 +350,30 @@
   }
   .tabbar button .i { font-size: 19px; line-height: 1; }
   .tabbar button.on { color: var(--accent); font-weight: 600; }
+
+  /* ---------- Toast ---------- */
+  .toast {
+    position: absolute; left: 50%; bottom: 78px; z-index: 90;
+    transform: translate(-50%, 10px);
+    display: flex; align-items: center; gap: 8px;
+    max-width: calc(100% - 40px);
+    padding: 10px 15px 10px 12px; border-radius: 13px;
+    background: rgba(20,23,28,.94); color: #fff;
+    font-size: 13px; line-height: 1.45; font-weight: 500;
+    box-shadow: 0 10px 26px rgba(0,0,0,.24);
+    opacity: 0; pointer-events: none;
+    transition: opacity .18s ease, transform .22s cubic-bezier(.22,.8,.3,1);
+  }
+  .toast.on { opacity: 1; transform: translate(-50%, 0); }
+  .toast .ic {
+    flex: 0 0 auto; width: 18px; height: 18px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; font-style: normal;
+    background: rgba(255,255,255,.2);
+  }
+  .toast .ic.ok   { background: #12a271; }
+  .toast .ic.warn { background: #d98214; }
+  .toast b { font-weight: 700; }
 
   /* ---------- Bottom Sheet ---------- */
   .scrim {
@@ -459,6 +499,8 @@
     box-shadow: inset 0 0 0 1px rgba(0,0,0,.05);
   }
   .pat .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  /* 有图时必须脱离 3×3 格子：否则 img 只占第一格，图片被压成左上角一小块 */
+  .pat .thumb.hasimg { display: block; }
   .pat .thumb i { display: block; }
   .pat .pm { flex: 1; min-width: 0; }
   .pat .pm b { font-size: 14.5px; font-weight: 600; display: block; }
@@ -2144,7 +2186,7 @@ function defaultDia(){
 }
 
 function thumbHtml(p){
-  if (p.img) return `<div class="thumb"><img src="${p.img}" alt=""></div>`;
+  if (p.img) return `<div class="thumb hasimg"><img src="${p.img}" alt=""></div>`;
   const codes = Object.keys(p.items).slice(0, 9);
   const cells = Array.from({ length: 9 }, (_, i) =>
     `<i style="background:${codes[i] ? hexOf(codes[i]) : '#f1f3f5'}"></i>`).join('');
@@ -2357,7 +2399,8 @@ function openPattern(id){
 
   const undoBtn = $('patd-undobtn');
   if (undoBtn) undoBtn.onclick = () => {
-    if (!confirm(`撤销这次扣减，把 ${lastBatch.colors} 色 ${intFmt(lastBatch.need)} 颗退回库存？`)) return;
+    const back = `${lastBatch.colors} 色 ${intFmt(lastBatch.need)} 颗`;
+    if (!confirm(`撤销这次扣减，把 ${back}退回库存？`)) return;
     const r = undoConsume();
     if (!r.ok && r.reason === 'drift'){
       const names = r.keys.map(k => k.split('|')[0]).join('、');
@@ -2366,6 +2409,7 @@ function openPattern(id){
     }
     if (!r.ok) return;
     openPattern(id); renderPatterns(); renderStock();
+    toast(`已撤销，${back}退回库存`, { kind:'info', ms:2300 });
   };
 
   const imgBtn = $('patd-imgbtn');
@@ -2401,6 +2445,7 @@ function openPattern(id){
       if (!confirm(`从「${p.name}」里去掉 ${code}？`)) return;
       delete p.items[code]; p.at = Date.now(); save();
       openPattern(id); renderPatterns();
+      toast(`已去掉 ${code}`, { kind:'info' });
     };
   });
   $('patd-add').onclick = () => addColors(id);
@@ -2455,10 +2500,13 @@ function openConsume(pid){
 
   $('bc-cancel').onclick = closeSheet;
   $('bc-ok').onclick = () => {
-    runConsume(p, plan);
+    const n = runConsume(p, plan);
+    const done = lastBatch ? `已扣 ${lastBatch.colors} 色 ${intFmt(lastBatch.need)} 颗` : '';
     closeSheet();
     openPattern(pid);
     renderPatterns(); renderStock();
+    if (!n) toast('没有可扣的颗数', { kind:'warn' });
+    else toast(`${done}　可撤销`, { ms: 2400 });
   };
 }
 
@@ -2471,7 +2519,10 @@ function addColors(pid){
     title: `给「${p.name}」加色号`,
     sub: '点色块填数量，填完回来接着点下一个；同一系列不用重选',
     okText: '完成',
-    onOk: closeSheet,
+    onOk: () => {
+      closeSheet();
+      if (added) toast(`已保存 ${added} 个色号的数量`);
+    },
     onPick(code, api){
       numPad({
         title: `${code} 需要多少颗`, unit:'颗', decimal:false,
@@ -2671,6 +2722,7 @@ function newPattern(){
     logIt(null, null, 'PAT_NEW', `新建图案「${name}」`);
     save(); closeSheet();
     renderPatterns();
+    toast(`已新建「${name}」`);
     setTimeout(() => openPattern(p.id), 200);
   };
 }
@@ -2707,6 +2759,7 @@ $('patd-more').onclick = () => {
   save();
   $('p-patd').classList.remove('on');
   renderPatterns();
+  toast(`已删除「${p.name}」`, { kind:'info' });
 };
 
 /* ===================== ② 库存页 ===================== */
@@ -2732,21 +2785,24 @@ function lowCount(){ let n = 0; COLORS.forEach(c => { if (isLow(agg(c.code))) n+
 
 function renderStock(){
   const low = lowCount();
-  // 预警被关掉或已经没东西偏少时，"偏少"这一格会消失，筛选得跟着回到全部
-  if (filter === 'low' && !(S.warn > 0 && low > 0)) filter = 'all';
   $('s-sub').innerHTML = `${stockedColors()} 个色号 · ${intFmt(totalCount())} 颗`
-    + (low ? ` · <span style="color:#d93025">${low} 个偏少</span>` : '');
+    + (low ? ` · <button class="sublow" id="sub-low">${low} 个预警</button>` : '');
   renderSort();
   renderFambar();
   renderGrid();
+  const sl = $('sub-low');
+  if (sl) sl.onclick = () => { filter = 'low'; renderFambar(); renderGrid(); };
 }
 
 function renderFambar(){
-  const has = stockedColors(), low = lowCount();
-  const items = [{ k:'all', label:'全部', n:COLORS.length, h:has },
-                 { k:'stock', label:'有货', n:has, h:has }];
-  // 只有开着预警、且确实有色号偏少时才挂这一格
-  if (S.warn > 0 && low > 0) items.push({ k:'low', label:'偏少', n:low, h:low });
+  const has = stockedColors(), low = lowCount(), on = S.warn > 0;
+  // 「预警」是常驻的一格：以前只在真有色号偏低时才挂出来，结果没人知道有这个筛选
+  const items = [
+    { k:'all',   label:'全部', n:COLORS.length, h:has },
+    { k:'stock', label:'有货', n:has, h:has },
+    { k:'low',   label:'预警', n:on ? low : null, h:on ? low : 0,
+      cls:'chipwarn' + (on && low > 0 ? ' alarm' : '') }
+  ];
   FAMILIES.forEach(f => {
     const inFam = COLORS.filter(c => c.family === f);
     items.push({ k:f, label:f, n:inFam.length,
@@ -2754,8 +2810,9 @@ function renderFambar(){
   });
   $('fambar').innerHTML = items.map(it => {
     const cnt = (it.k === 'all' || it.k === 'stock') ? it.n : (it.h > 0 ? it.h : it.n);
-    return `<button class="chip${filter === it.k ? ' on' : ''}${it.h > 0 ? ' has' : ''}"
-              data-f="${it.k}">${it.label}<em>${cnt}</em></button>`;
+    const num = it.n === null ? '' : `<em>${cnt}</em>`;
+    return `<button class="chip${filter === it.k ? ' on' : ''}${it.h > 0 ? ' has' : ''} ${it.cls || ''}"
+              data-f="${it.k}">${it.label}${num}</button>`;
   }).join('');
   $('fambar').querySelectorAll('.chip').forEach(b => {
     b.onclick = () => { filter = b.dataset.f; renderFambar(); renderGrid(); };
@@ -2765,7 +2822,7 @@ function renderFambar(){
 function visibleColors(){
   let list = COLORS;
   if (filter === 'stock') list = list.filter(c => agg(c.code).count > 0);
-  else if (filter === 'low') list = list.filter(c => isLow(agg(c.code)));
+  else if (filter === 'low') list = S.warn > 0 ? list.filter(c => isLow(agg(c.code))) : [];
   else if (filter !== 'all') list = list.filter(c => c.family === filter);
 
   const ord = {}; FAMILIES.forEach((f,i) => ord[f] = i);
@@ -2774,6 +2831,11 @@ function visibleColors(){
       const rt = agg(a.code).lastAt || 0, rb = agg(b.code).lastAt || 0;
       if (rt !== rb) return rb - rt;
     }
+    // 预警视图：缺得最多的排最前，同等缺口再按色号
+    if (filter === 'low'){
+      const d = agg(a.code).count - agg(b.code).count;
+      if (d) return d;
+    }
     return ord[a.family]-ord[b.family] || a.num-b.num;
   });
 }
@@ -2781,11 +2843,22 @@ function visibleColors(){
 function renderGrid(){
   const list = visibleColors(), g = $('grid');
   if (!list.length){
+    if (filter === 'low'){
+      const on = S.warn > 0;
+      g.innerHTML = `<div class="empty" style="grid-column:1/-1">
+        ${on ? `没有色号低于 ${intFmt(S.warn)} 颗` : '还没设预警值'}
+        <br><span class="em">${on
+          ? '用到的色号都还够，等哪个掉下去了会自动出现在这里'
+          : '设一个下限，低于它的色号会打上 ! 标记并单独列在这里'}</span>
+        <div><button class="emptybtn" id="low-act">${on ? '改预警值' : '设预警值'}</button></div>
+      </div>`;
+      const b = $('low-act');
+      if (b) b.onclick = openWarn;
+      return;
+    }
     g.innerHTML = `<div class="empty" style="grid-column:1/-1">${
       filter === 'stock'
-        ? '还没有任何库存<br><span style="font-size:12px;color:var(--faint)">切到「全部」点任意色号开始入库</span>'
-        : filter === 'low'
-        ? `没有色号低于 ${intFmt(S.warn)} 颗<br><span style="font-size:12px;color:var(--faint)">预警值可以在设置里改</span>`
+        ? '还没有任何库存<br><span class="em">切到「全部」点任意色号开始入库</span>'
         : '没有匹配的色号'}</div>`;
     return;
   }
@@ -3127,8 +3200,11 @@ function openUpdate(code, dia, opt){
       setTimeout(() => { f.style.borderColor = ''; }, 900);
       return;
     }
-    commitUpdate(code, dia, r);
+    const info = commitUpdate(code, dia, r);
     closeSheet();
+    if (!info) return;
+    if (info.qty === 0) toast(`${info.msg}　这个色号用完了`, { kind:'warn', ms:2400 });
+    else toast(info.msg);
   };
   paint();
 }
@@ -3242,6 +3318,13 @@ function commitUpdate(code, dia, r){
   if (tab === 'brand') renderBrands();
   pickedCode = code;
   renderSort();
+
+  // 交给调用方闪一下 toast：这是「用户最需要知道成没成」的那一下
+  return {
+    qty: r.qty,
+    msg: up.op === 'set' ? `已设为 ${intFmt(r.qty)} 颗`
+                        : `${mv.core} · 共 ${intFmt(r.qty)} 颗`
+  };
 }
 
 /* ===================== ② 品牌页 ===================== */
@@ -3419,6 +3502,7 @@ function openSwatch(src, code){
     save(); closeSheet();
     openType(); renderGrid();
     if ($('p-color').classList.contains('on')) openColor();
+    toast(hex === std ? `${code} 已恢复标准色` : `${code} 记为 ${hex}`);
   };
 }
 
@@ -3580,6 +3664,7 @@ function openCalibrate(target, back){
     save(); closeSheet();
     renderBrands(); renderStock();
     if ($('p-color').classList.contains('on')) openColor();
+    toast(`颗重已更新 ${w.toFixed(4)} g/颗`);
     // 从录入抽屉过来的，标定完原路回去，已经填的数量还在
     if (back) setTimeout(() => openUpdate(back.code, back.dia, back), 220);
     pendingBack = null;
@@ -3641,6 +3726,7 @@ function openBrandEdit(src){
            S.sources.push(ns); logIt(null, null, 'SRC_NEW', `新增来源 ${name}`); }
     save(); closeSheet();
     renderBrands(); renderStock();
+    toast(src ? `已改为「${name}」` : `已添加来源「${name}」`);
     if (!isNew && curSource === src.id) openType();
   };
 }
@@ -3763,6 +3849,7 @@ function openWarn(){
       ? `预警值设为 ${intFmt(S.warn)} 颗` : '关闭低库存预警');
     save(); closeSheet();
     renderStock(); renderSettings();
+    toast(S.warn > 0 ? `低于 ${intFmt(S.warn)} 颗时提醒` : '已关闭低库存预警', { kind:'info' });
   };
   paint();
 }
@@ -3889,6 +3976,7 @@ function openBulkInit(){
     refreshAll();
     pickedCode = null;
     renderSort();
+    toast(`已把 ${codes.length} 个色号设为 ${intFmt(qty)} 颗`, { ms:2300 });
   }
 
   form();
@@ -4062,6 +4150,35 @@ function openPicker(opt){
   paint();
 }
 
+/* ===================== Toast ===================== */
+let toastEl = null, toastTimer = null;
+
+/**
+ * 一句话反馈：干完就闪一下，1.9 秒自动消失，不用点、不挡操作。
+ * 只用在「用户需要知道刚才那一下成没成」的地方——别拿它做教学和报错，
+ * 需要用户确认的一律用 sheet，需要解释的用页面内的说明。
+ */
+function toast(msg, opt){
+  const o = opt || {};
+  const host = document.querySelector('.phone') || document.body;
+  if (!toastEl || !toastEl.isConnected){
+    toastEl = document.createElement('div');
+    toastEl.className = 'toast';
+    host.appendChild(toastEl);
+  }
+  const kind = o.kind || 'ok';
+  const mark = kind === 'warn' ? '!' : (kind === 'info' ? 'i' : '✓');
+  toastEl.innerHTML = `<i class="ic ${kind}">${mark}</i><span class="tx">${msg}</span>`;
+
+  // 连着触发两次（比如快速扣两次）也要重播入场，不能只是把文字换掉
+  toastEl.classList.remove('on');
+  void toastEl.offsetWidth;
+  toastEl.classList.add('on');
+
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('on'), o.ms || 1900);
+}
+
 /* ===================== sheet 控制 ===================== */
 function sheet(html){
   const el = $('sheet');
@@ -4107,6 +4224,16 @@ function refreshAll(){ renderPatterns(); renderStock(); renderBrands(); renderSe
 refreshAll();
 
 /* ===================== 调试入口（仅截图核对用，不影响正常使用） ===================== */
+/** 一张假图，用来核对「有图」状态下的列表缩略图与详情页头部 */
+function devImg(){
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300">' +
+    '<rect width="400" height="300" fill="#f3efe6"/>' +
+    '<circle cx="200" cy="120" r="70" fill="#e2574c"/>' +
+    '<rect x="150" y="185" width="100" height="70" rx="8" fill="#f0e6cf"/>' +
+    '<circle cx="180" cy="110" r="9" fill="#fff"/><circle cx="220" cy="110" r="9" fill="#fff"/></svg>');
+}
+
 (function dev(){
   const p = new URLSearchParams(location.search), d = p.get('dev');
   if (!d) return;
@@ -4188,14 +4315,20 @@ refreshAll();
     tap('pat'); setTimeout(() => openPattern(p.get('p') || 'p1'), 60); }
   if (d === 'patdimg'){ tap('pat'); setTimeout(() => {
     const pt = patOf(p.get('p') || 'p1');
-    pt.img = 'data:image/svg+xml;utf8,' + encodeURIComponent(
-      '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300">' +
-      '<rect width="400" height="300" fill="#f3efe6"/>' +
-      '<circle cx="200" cy="120" r="70" fill="#e2574c"/>' +
-      '<rect x="150" y="185" width="100" height="70" rx="8" fill="#f0e6cf"/>' +
-      '<circle cx="180" cy="110" r="9" fill="#fff"/><circle cx="220" cy="110" r="9" fill="#fff"/></svg>');
+    pt.img = devImg();
     save(); openPattern(pt.id);
   }, 60); }
+  // 列表页也有图的样子：核对缩略图有没有被 3×3 格子压成一小块
+  if (d === 'patlistimg'){ tap('pat'); setTimeout(() => {
+    patOf(p.get('p') || 'p1').img = devImg();
+    save(); renderPatterns();
+  }, 60); }
+  // 录一次扣减，看 toast
+  if (d === 'tstsub'){ tap('stock'); setTimeout(() => openColor(), 60);
+    setTimeout(() => openUpdate('A21', 2.6, { unit:'pcs', op:'sub', v:120 }), 180);
+    setTimeout(() => { const b = document.getElementById('up-ok'); b && b.click(); }, 300); }
+  // 列表页上的 toast：核对它和底部 tab 的距离
+  if (d === 'toastdemo'){ tap('pat'); setTimeout(() => toast(p.get('m') || '已删除「小蘑菇」', { kind:p.get('k') || 'ok' }), 80); }
   if (d === 'numpad'){ tap('pat'); setTimeout(() => openPattern(p.get('p') || 'p1'), 60);
     setTimeout(() => { const el = document.querySelector('#patd-body .item'); if (el) el.click(); }, 300); }
   if (d === 'patmiss'){ tap('pat'); setTimeout(() => {
@@ -4206,7 +4339,9 @@ refreshAll();
   if (d === 'color'){ tap('stock'); curCode = p.get('c') || 'A21';
     setTimeout(() => { pickedCode = curCode; openColor(); }, 60); }
   if (d === 'set'){ tap('set'); }
-  if (d === 'low'){ filter = 'low'; setTimeout(renderStock, 30); }
+  if (d === 'low'){ filter = 'low'; tap('stock'); setTimeout(renderStock, 30); }
+  if (d === 'lownone'){ S.warn = 0; filter = 'low'; tap('stock'); setTimeout(renderStock, 30); }
+  if (d === 'lowzero'){ S.warn = 10; filter = 'low'; tap('stock'); setTimeout(renderStock, 30); }
   if (d === 'warn'){ tap('set'); setTimeout(openWarn, 80); }
 })();
 
