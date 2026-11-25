@@ -118,6 +118,8 @@
 
   /* ---------- 点选网格 ---------- */
   .picks { display: flex; flex-wrap: wrap; gap: 6px; }
+  .picks.nums { display: grid; grid-template-columns: repeat(5, 1fr); }
+  .picks.nums .pick { width: auto; }
   .picks.lock { opacity: .32; pointer-events: none; }
   .pick {
     width: 46px; height: 46px; border: 1.5px solid var(--line); background: var(--card);
@@ -132,14 +134,37 @@
   .pick:disabled { opacity: .26; }
   .pick.sm { width: 38px; height: 42px; font-size: 14.5px; }
 
-  /* ---------- 数字键盘层（覆盖在 sheet 之上，不调系统键盘） ---------- */
+  /* ---------- 色号定位的位槽（计算器式） ---------- */
+  .slots { display: flex; gap: 8px; margin-bottom: 10px; align-items: flex-start; }
+  .slot {
+    flex: 1; min-width: 0; border: 1.5px solid var(--line);
+    border-radius: 12px; background: #fff; cursor: pointer;
+    padding: 8px 4px 9px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2px;
+  }
+  .slot em { font-style: normal; font-size: 10px; color: var(--faint); letter-spacing: .2px; }
+  .slot b { font-size: 27px; font-weight: 700; line-height: 1; letter-spacing: -.5px;
+            font-variant-numeric: tabular-nums; }
+  .slot.blank b { color: #d2d7dd; font-weight: 500; }
+  .slot.on.blank b { color: #b6bec8; }
+  .slot.on { border-color: var(--accent); background: var(--accent-soft); }
+  .slot.on b, .slot.on em { color: var(--accent); }
+  .slot:disabled { opacity: .45; }
+
+  /* ---------- 数字键盘层（盖在所有页面之上，不调系统键盘） ---------- */
   .padlayer {
-    position: absolute; inset: 0; z-index: 9; background: var(--card);
-    border-radius: 18px 18px 0 0; display: none; flex-direction: column;
-    padding: 0 16px calc(12px + env(safe-area-inset-bottom));
+    position: absolute; inset: 0; z-index: 70;
+    background: rgba(14,18,26,.34);
+    display: none; flex-direction: column; justify-content: flex-end;
   }
   .padlayer.on { display: flex; }
-  .padhd { padding: 18px 2px 0; flex: 0 0 auto; }
+  .padcard {
+    background: var(--card); border-radius: 18px 18px 0 0;
+    padding: 4px 16px calc(12px + env(safe-area-inset-bottom));
+    display: flex; flex-direction: column;
+  }
+  .padhd { padding: 14px 2px 0; flex: 0 0 auto; }
   .padhd .t { font-size: 12px; color: var(--muted); }
   .padhd .v {
     font-size: 34px; font-weight: 700; letter-spacing: -.8px; line-height: 1.35;
@@ -221,6 +246,14 @@
   .bead .qty.est { background: rgba(254,243,199,.97); color: var(--warn); }
   .bead .multi { position: absolute; top: 5px; right: 5px; width: 5px; height: 5px;
                  border-radius: 50%; background: #fff; box-shadow: 0 0 0 1.5px rgba(0,0,0,.3); }
+  /* 低于预警值：左上角一个红标，右上角留给多品牌小点，底部留给颗数 */
+  .bead .low {
+    position: absolute; top: 3px; left: 3px; width: 15px; height: 15px;
+    border-radius: 50%; background: #d93025; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 800; line-height: 1;
+    box-shadow: 0 1px 3px rgba(0,0,0,.32);
+  }
 
   .empty { text-align: center; color: var(--muted); font-size: 13px; padding: 60px 20px; line-height: 1.9; }
 
@@ -240,7 +273,9 @@
   .item .mid small { font-size: 11.5px; color: var(--muted); display: block;
                      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .item .right { text-align: right; font-variant-numeric: tabular-nums; flex: 0 0 auto; }
-  .item .right b { font-size: 15px; font-weight: 600; }
+  .item .right b { font-size: 15px; font-weight: 600; white-space: nowrap; }
+  .item .right b i { font-style: normal; font-size: 10.5px; font-weight: 400;
+                     color: var(--muted); margin-left: 1px; }
   .item .right small { display: block; font-size: 10.5px; color: var(--muted); }
   .item .arrow { color: #c9ced6; font-size: 15px; flex: 0 0 auto; margin-left: -2px; }
 
@@ -264,6 +299,18 @@
   .sect-t { font-size: 11.5px; color: var(--faint); font-weight: 500;
             letter-spacing: .4px; padding: 16px 2px 7px; display: flex; align-items: center; }
   .sect-t .sp { margin-left: auto; font-weight: 400; font-size: 11px; }
+
+  /* 色号清单的排序开关 */
+  .sect-t .sortbtn {
+    margin-left: auto; border: 0; background: none; cursor: pointer;
+    padding: 4px 3px 4px 10px; font: inherit; font-size: 11px;
+    color: var(--accent); display: inline-flex; align-items: center; gap: 3px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap; flex: 0 0 auto;
+  }
+  .sect-t .sortbtn i { font-style: normal; font-size: 10px; opacity: .5; margin-right: 1px; }
+  .sortrow { display: flex; gap: 7px; flex-wrap: wrap; padding: 0 2px 9px; }
+  .sortrow .diachip { padding: 7px 11px; font-size: 12px; border-radius: 8px; }
 
   /* 日志 */
   .log { display: flex; gap: 9px; padding: 9px 13px; border-bottom: 1px solid var(--line2);
@@ -310,6 +357,14 @@
   .sheet .sb { padding: 4px 18px 0; overflow-y: auto; min-height: 0; }
 
   .lbl { font-size: 11.5px; color: var(--faint); margin: 14px 0 6px; letter-spacing: .3px; }
+  .diachips { display: flex; gap: 7px; }
+  .diachip {
+    border: 1.5px solid var(--line); background: #fff; border-radius: 9px;
+    padding: 8px 14px; font-size: 13px; cursor: pointer; font-variant-numeric: tabular-nums;
+  }
+  .diachip.on { border-color: var(--accent); background: var(--accent-soft);
+                color: var(--accent); font-weight: 600; }
+  #bi-dias .dia { flex: 0 0 auto; min-width: 84px; }
   .seg { display: flex; gap: 3px; background: #f0f1f4; padding: 3px; border-radius: 10px; }
   .seg button {
     flex: 1; border: 0; background: transparent; padding: 8px 4px; border-radius: 8px;
@@ -330,6 +385,20 @@
   .prev .bad  { color: var(--danger); font-weight: 600; font-variant-numeric: tabular-nums; }
   .prev hr { border: 0; border-top: 1px solid var(--line); margin: 8px 0; }
 
+  /* 颗重那一条：左边是当前值，右边是入口 */
+  .calrow {
+    display: flex; align-items: center; gap: 8px; margin-top: 10px;
+    padding: 10px 12px; background: #f6f7f9; border-radius: 10px;
+    font-size: 12px; color: var(--muted); line-height: 1.5;
+  }
+  .calrow b { color: var(--text); font-variant-numeric: tabular-nums; }
+  .calrow .lnk {
+    margin-left: auto; flex: 0 0 auto; border: 0; background: none; padding: 2px 0 2px 6px;
+    font-size: 12px; font-weight: 600; color: var(--accent); cursor: pointer;
+  }
+  .calrow .lnk:active { opacity: .6; }
+  .calrow .just { color: var(--ok); font-weight: 600; }
+
   .hint {
     background: var(--accent-soft); border-radius: 10px; padding: 10px 12px;
     font-size: 12px; line-height: 1.65; color: #33507f; margin-bottom: 12px;
@@ -342,7 +411,7 @@
     cursor: pointer; background: #f0f1f4; color: var(--text); font-weight: 500;
   }
   .btn.pri { background: var(--accent); color: #fff; font-weight: 600; }
-  .btn.dgr { background: #fdecea; color: var(--danger); font-weight: 500; }
+  .btn.dgr { background: #d93025; color: #fff; font-weight: 600; }
   .btn:active { opacity: .82; }
 
   .field { margin-bottom: 11px; }
@@ -376,6 +445,148 @@
     cursor: pointer; font-weight: 500;
   }
   .inline-btn:active { background: var(--accent-soft); }
+
+  /* ---------- 图案 ---------- */
+  .pat {
+    display: flex; gap: 11px; padding: 11px; cursor: pointer;
+    border-bottom: 1px solid var(--line2); align-items: flex-start;
+  }
+  .pat:last-child { border-bottom: 0; }
+  .pat .thumb {
+    width: 66px; height: 66px; border-radius: 10px; flex: 0 0 auto;
+    background: #eef0f3; overflow: hidden;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.05);
+  }
+  .pat .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .pat .thumb i { display: block; }
+  .pat .pm { flex: 1; min-width: 0; }
+  .pat .pm b { font-size: 14.5px; font-weight: 600; display: block; }
+  .pat .pm small { font-size: 11.5px; color: var(--muted); display: block; margin-top: 2px; }
+  .pat .st {
+    display: inline-flex; align-items: center; gap: 3px; font-size: 11px;
+    font-weight: 600; padding: 2px 7px; border-radius: 6px; margin-top: 6px;
+  }
+  .pat .st.ok { background: var(--ok-soft); color: var(--ok); }
+  .pat .st.no { background: #fdecea; color: #b3271c; }
+
+  .miss { background: #fdf3f2; border-radius: 10px; padding: 4px 11px 8px; margin: 0 11px 10px; }
+  .miss .row { display: flex; align-items: center; gap: 8px; padding: 6px 0;
+               border-bottom: 1px solid rgba(179,39,28,.1); }
+  .miss .row:last-child { border-bottom: 0; }
+  .miss .row .c { flex: 1; font-size: 12.5px; }
+  .miss .row .c b { font-weight: 600; }
+  .miss .row .n { font-size: 12.5px; font-weight: 700; color: #b3271c;
+                  font-variant-numeric: tabular-nums; }
+  .miss .row .d { font-size: 11px; color: var(--muted); }
+
+  .item .del {
+    border: 0; background: #fdecea; color: #b3271c; border-radius: 8px;
+    font-size: 11.5px; padding: 6px 9px; cursor: pointer; flex: 0 0 auto;
+  }
+
+  .patimg {
+    width: 100%; border-radius: 14px; display: block; background: #eef0f3;
+    min-height: 120px; object-fit: contain; max-height: 300px;
+  }
+
+  /* 图案头图：没图时靠颜色带认图案，有图时颜色带收成图下细线 */
+  .pathead { position: relative; margin-bottom: 2px; }
+
+  /* 没图：整块可点，颜色带占满宽度、够高 */
+  .pathead .huecard {
+    display: block; width: 100%; padding: 0; border: 0; background: none;
+    font: inherit; text-align: left; cursor: pointer;
+  }
+  .pathead .huecard:active { opacity: .82; }
+  .pathead .huebig {
+    display: flex; gap: 2px; height: 96px; border-radius: 14px; overflow: hidden;
+    background: #eef0f3; box-shadow: inset 0 0 0 1px rgba(18,22,28,.06);
+  }
+  .pathead .huebig i {
+    display: flex; align-items: center; justify-content: center;
+    min-width: 0; overflow: hidden; white-space: nowrap;
+    font-size: 11.5px; font-weight: 600; letter-spacing: .2px;
+  }
+  .pathead .huehint {
+    display: block; margin-top: 9px; font-size: 11.5px; color: var(--faint);
+    text-align: center; letter-spacing: .1px;
+  }
+  .pathead .huehint em {
+    font-style: normal; color: var(--text); font-weight: 500;
+  }
+
+  /* 有图：图 + 图下一条细色线，宽度等于整图，不抢画面 */
+  .pathead .huthin {
+    display: flex; gap: 1.5px; height: 7px; border-radius: 4px; overflow: hidden;
+    margin-top: 8px; background: #eef0f3;
+  }
+  .pathead .huthin i { display: block; min-width: 0; }
+
+  .pathead .imgact {
+    position: absolute; right: 9px; bottom: 9px; display: flex; gap: 7px;
+  }
+  .pathead.hasimg .imgact { bottom: 24px; }
+  .pathead .imgact button {
+    border: 0; border-radius: 8px; padding: 6px 11px; font-size: 11.5px;
+    background: rgba(18,22,28,.58); color: #fff; cursor: pointer;
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  }
+  .pathead .imgact button:active { background: rgba(18,22,28,.78); }
+  .pathead .imgact button.dark { background: rgba(255,255,255,.92); color: var(--text); }
+
+  /* ---------- 整图扣减：撤销横幅 ---------- */
+  .undo {
+    display: flex; align-items: center; gap: 11px; margin-bottom: 12px;
+    padding: 12px 13px; border-radius: 12px;
+    background: var(--accent-soft); border: 1px solid #d8e3ff;
+  }
+  .undo .c { flex: 1; min-width: 0; }
+  .undo b { display: block; font-size: 13px; font-weight: 600; color: #1c3f8f; }
+  .undo small { display: block; font-size: 11px; color: #5674b8; margin-top: 2px; }
+  .undo .btn {
+    flex: 0 0 auto; background: #fff; color: var(--accent);
+    border: 1px solid #c8d8ff; font-size: 12.5px; padding: 8px 14px;
+  }
+
+  /* ---------- 整图扣减：确认页 ---------- */
+  .bc { border-bottom: 1px solid var(--line2); }
+  .bc:last-child { border-bottom: 0; }
+  .bch { display: flex; align-items: center; gap: 10px; padding: 11px 13px; }
+  .bch .sw {
+    width: 30px; height: 30px; border-radius: 8px; flex: 0 0 auto;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11.5px; font-weight: 600;
+  }
+  .bch .mid { flex: 1; min-width: 0; }
+  .bch .mid b { display: block; font-size: 13.5px; font-weight: 600; margin-bottom: 2px; }
+  .bcp { display: flex; align-items: baseline; gap: 5px; font-size: 11.5px;
+         color: var(--muted); line-height: 1.75; }
+  .bcp .bn { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bcp .bv { font-variant-numeric: tabular-nums; color: var(--text); }
+  .bcp .bv.z { color: #b3271c; font-weight: 600; }
+  .bcp .ba { color: var(--faint); }
+  .bch .br { flex: 0 0 auto; text-align: right; display: flex;
+             flex-direction: column; align-items: flex-end; gap: 5px;
+             align-self: flex-start; padding-top: 2px; }
+  .bch .br b { font-size: 12px; color: var(--muted); font-weight: 500; }
+  .swap {
+    border: 1px solid var(--line); background: #fff; color: var(--accent);
+    border-radius: 7px; font-size: 11.5px; padding: 4px 9px; cursor: pointer;
+  }
+  .bopt { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 13px 12px 53px; }
+  .ob {
+    border: 1.5px solid var(--line); background: #fff; border-radius: 9px;
+    padding: 7px 10px; font-size: 11.5px; color: var(--text); cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .ob em { font-style: normal; font-size: 11px; color: var(--faint);
+           font-variant-numeric: tabular-nums; }
+  .ob.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+  .ob.on em { color: var(--accent); opacity: .8; }
+  .bcsum { font-size: 12px; color: var(--muted); padding: 12px 4px 2px; line-height: 1.8; }
+  .bcsum b { color: var(--text); font-size: 13.5px; }
+  .bcsum .w { color: #b3271c; }
 </style>
 </head>
 <body>
@@ -385,8 +596,20 @@
   <!-- ========== 页面栈 ========== -->
   <div class="pages">
 
-    <!-- ① 库存（首页） -->
-    <section class="page on" id="p-stock">
+    <!-- ① 图案（首页：从要拼什么开始） -->
+    <section class="page on" id="p-pat">
+      <div class="ph big">
+        <div class="ph-row">
+          <h1>图案</h1>
+          <div class="sub" id="pt-sub">—</div>
+          <button class="act" id="btn-new-pat">新建</button>
+        </div>
+      </div>
+      <div class="body" id="pat-body"></div>
+    </section>
+
+    <!-- ② 库存 -->
+    <section class="page" id="p-stock">
       <div class="ph big">
         <div class="ph-row">
           <h1>库存</h1>
@@ -410,11 +633,11 @@
       </div>
     </section>
 
-    <!-- ② 品牌 -->
+    <!-- ② 来源 -->
     <section class="page" id="p-brand">
       <div class="ph big">
         <div class="ph-row">
-          <h1>品牌</h1>
+          <h1>来源</h1>
           <div class="sub" id="b-sub">—</div>
           <button class="act" id="btn-add-brand">新增</button>
         </div>
@@ -422,17 +645,26 @@
       <div class="body" id="brand-body"></div>
     </section>
 
-    <!-- ③ 日志 -->
-    <section class="page" id="p-log">
+    <!-- ③ 设置 -->
+    <section class="page" id="p-set">
       <div class="ph big">
         <div class="ph-row">
-          <h1>日志</h1>
-          <div class="sub" id="l-sub">—</div>
+          <h1>设置</h1>
         </div>
       </div>
-      <div class="body" id="log-body" style="padding:0 16px"></div>
+      <div class="body" id="set-body" style="padding:0 16px"></div>
     </section>
 
+  </div>
+
+  <!-- ========== 推入页：图案详情 ========== -->
+  <div class="push" id="p-patd">
+    <div class="nav">
+      <button class="back" id="patd-back">‹</button>
+      <div class="title" id="patd-title">图案</div>
+      <button class="r" id="patd-more">删除</button>
+    </div>
+    <div class="body" id="patd-body"></div>
   </div>
 
   <!-- ========== 推入页：色号详情 ========== -->
@@ -444,20 +676,34 @@
     <div class="body" id="color-body" style="padding-top:2px"></div>
   </div>
 
-  <!-- ========== 推入页：品牌详情 ========== -->
+  <!-- ========== 推入页：来源详情 ========== -->
   <div class="push" id="p-type">
     <div class="nav">
       <button class="back" id="type-back">‹</button>
-      <div class="title" id="type-title">品牌</div>
+      <div class="title" id="type-title">来源</div>
     </div>
     <div class="body" id="type-body" style="padding-top:2px"></div>
   </div>
 
   <!-- ========== 底部 tabbar ========== -->
   <nav class="tabbar">
-    <button data-tab="stock" class="on"><span class="i">▦</span>库存</button>
-    <button data-tab="brand"><span class="i">◫</span>品牌</button>
-    <button data-tab="log"><span class="i">≡</span>日志</button>
+    <button data-tab="pat" class="on"><span class="i">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor"
+           stroke-width="1.7" stroke-linejoin="round" style="display:block">
+        <rect x="2.6" y="3.4" width="14.8" height="13.2" rx="2.4"/>
+        <path d="M2.6 13.2l4.2-3.6 3 2.4 3.4-2.8 4.2 3.6"/>
+        <circle cx="7.2" cy="7.2" r="1.05"/>
+      </svg></span>图案</button>
+    <button data-tab="stock"><span class="i">▦</span>库存</button>
+    <button data-tab="brand"><span class="i">◫</span>来源</button>
+    <button data-tab="set"><span class="i">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none" style="display:block">
+        <g stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+          <path d="M2.8 6.6h14.4M2.8 13.4h14.4"/>
+        </g>
+        <circle cx="7.3" cy="6.6" r="2.6" fill="#fff" stroke="currentColor" stroke-width="1.7"/>
+        <circle cx="12.7" cy="13.4" r="2.6" fill="#fff" stroke="currentColor" stroke-width="1.7"/>
+      </svg></span>设置</button>
   </nav>
 
   <!-- ========== sheet ========== -->
@@ -467,7 +713,1177 @@
 </div>
 
 <script>
-const DATA = {"scheme":"MARD","brand":"MARD","title":"MARD 221 色色号表","version":"1.0","total":221,"source":"MARD 官方 221 色色卡照片取色（2026-11）","colorValueCaveat":"色值为色卡照片逐格取样的中位数，受拍摄光照与图片压缩影响，与实物存在色偏（估计 ΔE 3–8）。仅用于界面渲染色块辅助识别，不作为精确比对依据；用户可按实物校正。","note":"编号不补零（A1、A10）。原图右侧 + 号标记的是相对旧版 144 色新增的色号，本表不区分。","series":[{"prefix":"A","count":26,"colors":[{"code":"A1","num":1,"hex":"#FCF7D0"},{"code":"A2","num":2,"hex":"#FEFEDC"},{"code":"A3","num":3,"hex":"#FCFE92"},{"code":"A4","num":4,"hex":"#FCED60"},{"code":"A5","num":5,"hex":"#F4DB39"},{"code":"A6","num":6,"hex":"#FAAE56"},{"code":"A7","num":7,"hex":"#FB8A52"},{"code":"A8","num":8,"hex":"#FDDC51"},{"code":"A9","num":9,"hex":"#F99B5E"},{"code":"A10","num":10,"hex":"#F67D38"},{"code":"A11","num":11,"hex":"#FBE0A2"},{"code":"A12","num":12,"hex":"#FB9873"},{"code":"A13","num":13,"hex":"#FBC274"},{"code":"A14","num":14,"hex":"#F2573F"},{"code":"A15","num":15,"hex":"#FAEB68"},{"code":"A16","num":16,"hex":"#FCF1A3"},{"code":"A17","num":17,"hex":"#F8E579"},{"code":"A18","num":18,"hex":"#F7C37E"},{"code":"A19","num":19,"hex":"#FA7D76"},{"code":"A20","num":20,"hex":"#FBD97F"},{"code":"A21","num":21,"hex":"#FEE699"},{"code":"A22","num":22,"hex":"#F8F889"},{"code":"A23","num":23,"hex":"#E6D0BA"},{"code":"A24","num":24,"hex":"#FAF6B1"},{"code":"A25","num":25,"hex":"#FBD985"},{"code":"A26","num":26,"hex":"#F8C83F"}]},{"prefix":"B","count":32,"colors":[{"code":"B1","num":1,"hex":"#E5EE3D"},{"code":"B2","num":2,"hex":"#62F34A"},{"code":"B3","num":3,"hex":"#A2F981"},{"code":"B4","num":4,"hex":"#5DE035"},{"code":"B5","num":5,"hex":"#39E356"},{"code":"B6","num":6,"hex":"#68E2A5"},{"code":"B7","num":7,"hex":"#3CB082"},{"code":"B8","num":8,"hex":"#1E9B54"},{"code":"B9","num":9,"hex":"#255036"},{"code":"B10","num":10,"hex":"#98D5C1"},{"code":"B11","num":11,"hex":"#5D7230"},{"code":"B12","num":12,"hex":"#1A6D3D"},{"code":"B13","num":13,"hex":"#D1EA89"},{"code":"B14","num":14,"hex":"#B3E851"},{"code":"B15","num":15,"hex":"#335031"},{"code":"B16","num":16,"hex":"#CFE29E"},{"code":"B17","num":17,"hex":"#9DB03F"},{"code":"B18","num":18,"hex":"#E3EE5E"},{"code":"B19","num":19,"hex":"#2EB485"},{"code":"B20","num":20,"hex":"#C5F1D4"},{"code":"B21","num":21,"hex":"#126968"},{"code":"B22","num":22,"hex":"#0C373D"},{"code":"B23","num":23,"hex":"#2B381E"},{"code":"B24","num":24,"hex":"#F1FAB4"},{"code":"B25","num":25,"hex":"#53846C"},{"code":"B26","num":26,"hex":"#897E39"},{"code":"B27","num":27,"hex":"#D1E1B4"},{"code":"B28","num":28,"hex":"#A0E6B8"},{"code":"B29","num":29,"hex":"#C4E261"},{"code":"B30","num":30,"hex":"#E6FCB9"},{"code":"B31","num":31,"hex":"#B8E59C"},{"code":"B32","num":32,"hex":"#9DAC60"}]},{"prefix":"C","count":29,"colors":[{"code":"C1","num":1,"hex":"#EFFCF0"},{"code":"C2","num":2,"hex":"#AEFAFA"},{"code":"C3","num":3,"hex":"#A0E3F6"},{"code":"C4","num":4,"hex":"#47CCFB"},{"code":"C5","num":5,"hex":"#0AABEC"},{"code":"C6","num":6,"hex":"#55A9EE"},{"code":"C7","num":7,"hex":"#3777D1"},{"code":"C8","num":8,"hex":"#1153BD"},{"code":"C9","num":9,"hex":"#304CC3"},{"code":"C10","num":10,"hex":"#47B9DC"},{"code":"C11","num":11,"hex":"#30D9DB"},{"code":"C12","num":12,"hex":"#2B3044"},{"code":"C13","num":13,"hex":"#D4EBF9"},{"code":"C14","num":14,"hex":"#DDFAFE"},{"code":"C15","num":15,"hex":"#2EC1C2"},{"code":"C16","num":16,"hex":"#18569D"},{"code":"C17","num":17,"hex":"#1FC3EA"},{"code":"C18","num":18,"hex":"#1A3141"},{"code":"C19","num":19,"hex":"#1F849E"},{"code":"C20","num":20,"hex":"#20699E"},{"code":"C21","num":21,"hex":"#C7E1F8"},{"code":"C22","num":22,"hex":"#6DB4B9"},{"code":"C23","num":23,"hex":"#CFE1F7"},{"code":"C24","num":24,"hex":"#81C5F6"},{"code":"C25","num":25,"hex":"#B4E4EB"},{"code":"C26","num":26,"hex":"#40ABD2"},{"code":"C27","num":27,"hex":"#D3E5F8"},{"code":"C28","num":28,"hex":"#BECFE9"},{"code":"C29","num":29,"hex":"#394587"}]},{"prefix":"D","count":26,"colors":[{"code":"D1","num":1,"hex":"#B2B6F2"},{"code":"D2","num":2,"hex":"#868CDA"},{"code":"D3","num":3,"hex":"#3253A8"},{"code":"D4","num":4,"hex":"#1B2782"},{"code":"D5","num":5,"hex":"#B845C7"},{"code":"D6","num":6,"hex":"#AD7BDE"},{"code":"D7","num":7,"hex":"#8354B2"},{"code":"D8","num":8,"hex":"#E6D6FA"},{"code":"D9","num":9,"hex":"#D4BBF6"},{"code":"D10","num":10,"hex":"#331B4B"},{"code":"D11","num":11,"hex":"#BDBAE3"},{"code":"D12","num":12,"hex":"#E192C4"},{"code":"D13","num":13,"hex":"#AC0E82"},{"code":"D14","num":14,"hex":"#832993"},{"code":"D15","num":15,"hex":"#351F85"},{"code":"D16","num":16,"hex":"#E7D5DB"},{"code":"D17","num":17,"hex":"#C7D3EE"},{"code":"D18","num":18,"hex":"#A164C4"},{"code":"D19","num":19,"hex":"#DDC3DC"},{"code":"D20","num":20,"hex":"#9339A4"},{"code":"D21","num":21,"hex":"#910894"},{"code":"D22","num":22,"hex":"#36388A"},{"code":"D23","num":23,"hex":"#ECE2FB"},{"code":"D24","num":24,"hex":"#7F85E2"},{"code":"D25","num":25,"hex":"#4A50BF"},{"code":"D26","num":26,"hex":"#E3C7F9"}]},{"prefix":"E","count":24,"colors":[{"code":"E1","num":1,"hex":"#FBD6D5"},{"code":"E2","num":2,"hex":"#FCC6E0"},{"code":"E3","num":3,"hex":"#FCB8E3"},{"code":"E4","num":4,"hex":"#E6689E"},{"code":"E5","num":5,"hex":"#F554A0"},{"code":"E6","num":6,"hex":"#E94176"},{"code":"E7","num":7,"hex":"#C53372"},{"code":"E8","num":8,"hex":"#FAE1EC"},{"code":"E9","num":9,"hex":"#E772CB"},{"code":"E10","num":10,"hex":"#CC3B91"},{"code":"E11","num":11,"hex":"#FBE0D6"},{"code":"E12","num":12,"hex":"#F791C2"},{"code":"E13","num":13,"hex":"#A60F5E"},{"code":"E14","num":14,"hex":"#F5C5B9"},{"code":"E15","num":15,"hex":"#F7BFB6"},{"code":"E16","num":16,"hex":"#FCE4E1"},{"code":"E17","num":17,"hex":"#FCE9EB"},{"code":"E18","num":18,"hex":"#F9CBDE"},{"code":"E19","num":19,"hex":"#FBBED8"},{"code":"E20","num":20,"hex":"#DECAD1"},{"code":"E21","num":21,"hex":"#BB9EA7"},{"code":"E22","num":22,"hex":"#B3889D"},{"code":"E23","num":23,"hex":"#947988"},{"code":"E24","num":24,"hex":"#DDBDE6"}]},{"prefix":"F","count":25,"colors":[{"code":"F1","num":1,"hex":"#FA977D"},{"code":"F2","num":2,"hex":"#F73E4C"},{"code":"F3","num":3,"hex":"#F64C47"},{"code":"F4","num":4,"hex":"#F42A3C"},{"code":"F5","num":5,"hex":"#E1072B"},{"code":"F6","num":6,"hex":"#953330"},{"code":"F7","num":7,"hex":"#951A37"},{"code":"F8","num":8,"hex":"#B6062B"},{"code":"F9","num":9,"hex":"#E0697A"},{"code":"F10","num":10,"hex":"#86482C"},{"code":"F11","num":11,"hex":"#57211D"},{"code":"F12","num":12,"hex":"#F4526A"},{"code":"F13","num":13,"hex":"#E85C51"},{"code":"F14","num":14,"hex":"#F5A09A"},{"code":"F15","num":15,"hex":"#CA0C25"},{"code":"F16","num":16,"hex":"#FBC3AF"},{"code":"F17","num":17,"hex":"#E89D82"},{"code":"F18","num":18,"hex":"#CF804E"},{"code":"F19","num":19,"hex":"#BF454A"},{"code":"F20","num":20,"hex":"#CE9294"},{"code":"F21","num":21,"hex":"#F5B7C6"},{"code":"F22","num":22,"hex":"#FAC3D0"},{"code":"F23","num":23,"hex":"#ED8173"},{"code":"F24","num":24,"hex":"#E59BAD"},{"code":"F25","num":25,"hex":"#DE5251"}]},{"prefix":"G","count":21,"colors":[{"code":"G1","num":1,"hex":"#FDE6D3"},{"code":"G2","num":2,"hex":"#FACBB1"},{"code":"G3","num":3,"hex":"#F4C7AD"},{"code":"G4","num":4,"hex":"#E1B48B"},{"code":"G5","num":5,"hex":"#EEB153"},{"code":"G6","num":6,"hex":"#E49C35"},{"code":"G7","num":7,"hex":"#995C3D"},{"code":"G8","num":8,"hex":"#6F3A33"},{"code":"G9","num":9,"hex":"#E6B48D"},{"code":"G10","num":10,"hex":"#CF8F49"},{"code":"G11","num":11,"hex":"#E2C59F"},{"code":"G12","num":12,"hex":"#F5C090"},{"code":"G13","num":13,"hex":"#B36D4F"},{"code":"G14","num":14,"hex":"#955E4D"},{"code":"G15","num":15,"hex":"#F8EFDC"},{"code":"G16","num":16,"hex":"#EFD0B9"},{"code":"G17","num":17,"hex":"#79514A"},{"code":"G18","num":18,"hex":"#FDE5D3"},{"code":"G19","num":19,"hex":"#D87A42"},{"code":"G20","num":20,"hex":"#9D462E"},{"code":"G21","num":21,"hex":"#B98462"}]},{"prefix":"H","count":23,"colors":[{"code":"H1","num":1,"hex":"#FEFBFD"},{"code":"H2","num":2,"hex":"#FBFEFE"},{"code":"H3","num":3,"hex":"#B6B4B9"},{"code":"H4","num":4,"hex":"#89878D"},{"code":"H5","num":5,"hex":"#474749"},{"code":"H6","num":6,"hex":"#2E2C2A"},{"code":"H7","num":7,"hex":"#020100"},{"code":"H8","num":8,"hex":"#E5D9DD"},{"code":"H9","num":9,"hex":"#F3ECF3"},{"code":"H10","num":10,"hex":"#F3EAEE"},{"code":"H11","num":11,"hex":"#D4CFD5"},{"code":"H12","num":12,"hex":"#FCE4E0"},{"code":"H13","num":13,"hex":"#F4DECC"},{"code":"H14","num":14,"hex":"#D4D6CD"},{"code":"H15","num":15,"hex":"#A0A5A0"},{"code":"H16","num":16,"hex":"#211411"},{"code":"H17","num":17,"hex":"#F7E9E6"},{"code":"H18","num":18,"hex":"#FDFBF5"},{"code":"H19","num":19,"hex":"#F6F4EC"},{"code":"H20","num":20,"hex":"#9C9CA0"},{"code":"H21","num":21,"hex":"#FDFBE9"},{"code":"H22","num":22,"hex":"#D0CBD0"},{"code":"H23","num":23,"hex":"#9A9E93"}]},{"prefix":"M","count":15,"colors":[{"code":"M1","num":1,"hex":"#C0C6C0"},{"code":"M2","num":2,"hex":"#90A08B"},{"code":"M3","num":3,"hex":"#6D7C7B"},{"code":"M4","num":4,"hex":"#E6D5C5"},{"code":"M5","num":5,"hex":"#D6CDB4"},{"code":"M6","num":6,"hex":"#B4A78D"},{"code":"M7","num":7,"hex":"#B4A49C"},{"code":"M8","num":8,"hex":"#AC8482"},{"code":"M9","num":9,"hex":"#A3896D"},{"code":"M10","num":10,"hex":"#C7B6BF"},{"code":"M11","num":11,"hex":"#9B7D8E"},{"code":"M12","num":12,"hex":"#6D4848"},{"code":"M13","num":13,"hex":"#CF9777"},{"code":"M14","num":14,"hex":"#C57968"},{"code":"M15","num":15,"hex":"#7A807B"}]}]};
+const DATA = {
+  "scheme": "MARD",
+  "brand": "MARD",
+  "title": "MARD 221 色色号表",
+  "version": "1.0",
+  "total": 221,
+  "source": "MARD 官方 221 色色卡照片取色（2026-11）",
+  "colorValueCaveat": "色值为色卡照片逐格取样的中位数，受拍摄光照与图片压缩影响，与实物存在色偏（估计 ΔE 3–8）。仅用于界面渲染色块辅助识别，不作为精确比对依据；用户可按实物校正。",
+  "note": "编号不补零（A1、A10）。原图右侧 + 号标记的是相对旧版 144 色新增的色号，本表不区分。",
+  "series": [
+    {
+      "prefix": "A",
+      "count": 26,
+      "colors": [
+        {
+          "code": "A1",
+          "num": 1,
+          "hex": "#FCF7D0"
+        },
+        {
+          "code": "A2",
+          "num": 2,
+          "hex": "#FEFEDC"
+        },
+        {
+          "code": "A3",
+          "num": 3,
+          "hex": "#FCFE92"
+        },
+        {
+          "code": "A4",
+          "num": 4,
+          "hex": "#FCED60"
+        },
+        {
+          "code": "A5",
+          "num": 5,
+          "hex": "#F4DB39"
+        },
+        {
+          "code": "A6",
+          "num": 6,
+          "hex": "#FAAE56"
+        },
+        {
+          "code": "A7",
+          "num": 7,
+          "hex": "#FB8A52"
+        },
+        {
+          "code": "A8",
+          "num": 8,
+          "hex": "#FDDC51"
+        },
+        {
+          "code": "A9",
+          "num": 9,
+          "hex": "#F99B5E"
+        },
+        {
+          "code": "A10",
+          "num": 10,
+          "hex": "#F67D38"
+        },
+        {
+          "code": "A11",
+          "num": 11,
+          "hex": "#FBE0A2"
+        },
+        {
+          "code": "A12",
+          "num": 12,
+          "hex": "#FB9873"
+        },
+        {
+          "code": "A13",
+          "num": 13,
+          "hex": "#FBC274"
+        },
+        {
+          "code": "A14",
+          "num": 14,
+          "hex": "#F2573F"
+        },
+        {
+          "code": "A15",
+          "num": 15,
+          "hex": "#FAEB68"
+        },
+        {
+          "code": "A16",
+          "num": 16,
+          "hex": "#FCF1A3"
+        },
+        {
+          "code": "A17",
+          "num": 17,
+          "hex": "#F8E579"
+        },
+        {
+          "code": "A18",
+          "num": 18,
+          "hex": "#F7C37E"
+        },
+        {
+          "code": "A19",
+          "num": 19,
+          "hex": "#FA7D76"
+        },
+        {
+          "code": "A20",
+          "num": 20,
+          "hex": "#FBD97F"
+        },
+        {
+          "code": "A21",
+          "num": 21,
+          "hex": "#FEE699"
+        },
+        {
+          "code": "A22",
+          "num": 22,
+          "hex": "#F8F889"
+        },
+        {
+          "code": "A23",
+          "num": 23,
+          "hex": "#E6D0BA"
+        },
+        {
+          "code": "A24",
+          "num": 24,
+          "hex": "#FAF6B1"
+        },
+        {
+          "code": "A25",
+          "num": 25,
+          "hex": "#FBD985"
+        },
+        {
+          "code": "A26",
+          "num": 26,
+          "hex": "#F8C83F"
+        }
+      ]
+    },
+    {
+      "prefix": "B",
+      "count": 32,
+      "colors": [
+        {
+          "code": "B1",
+          "num": 1,
+          "hex": "#E5EE3D"
+        },
+        {
+          "code": "B2",
+          "num": 2,
+          "hex": "#62F34A"
+        },
+        {
+          "code": "B3",
+          "num": 3,
+          "hex": "#A2F981"
+        },
+        {
+          "code": "B4",
+          "num": 4,
+          "hex": "#5DE035"
+        },
+        {
+          "code": "B5",
+          "num": 5,
+          "hex": "#39E356"
+        },
+        {
+          "code": "B6",
+          "num": 6,
+          "hex": "#68E2A5"
+        },
+        {
+          "code": "B7",
+          "num": 7,
+          "hex": "#3CB082"
+        },
+        {
+          "code": "B8",
+          "num": 8,
+          "hex": "#1E9B54"
+        },
+        {
+          "code": "B9",
+          "num": 9,
+          "hex": "#255036"
+        },
+        {
+          "code": "B10",
+          "num": 10,
+          "hex": "#98D5C1"
+        },
+        {
+          "code": "B11",
+          "num": 11,
+          "hex": "#5D7230"
+        },
+        {
+          "code": "B12",
+          "num": 12,
+          "hex": "#1A6D3D"
+        },
+        {
+          "code": "B13",
+          "num": 13,
+          "hex": "#D1EA89"
+        },
+        {
+          "code": "B14",
+          "num": 14,
+          "hex": "#B3E851"
+        },
+        {
+          "code": "B15",
+          "num": 15,
+          "hex": "#335031"
+        },
+        {
+          "code": "B16",
+          "num": 16,
+          "hex": "#CFE29E"
+        },
+        {
+          "code": "B17",
+          "num": 17,
+          "hex": "#9DB03F"
+        },
+        {
+          "code": "B18",
+          "num": 18,
+          "hex": "#E3EE5E"
+        },
+        {
+          "code": "B19",
+          "num": 19,
+          "hex": "#2EB485"
+        },
+        {
+          "code": "B20",
+          "num": 20,
+          "hex": "#C5F1D4"
+        },
+        {
+          "code": "B21",
+          "num": 21,
+          "hex": "#126968"
+        },
+        {
+          "code": "B22",
+          "num": 22,
+          "hex": "#0C373D"
+        },
+        {
+          "code": "B23",
+          "num": 23,
+          "hex": "#2B381E"
+        },
+        {
+          "code": "B24",
+          "num": 24,
+          "hex": "#F1FAB4"
+        },
+        {
+          "code": "B25",
+          "num": 25,
+          "hex": "#53846C"
+        },
+        {
+          "code": "B26",
+          "num": 26,
+          "hex": "#897E39"
+        },
+        {
+          "code": "B27",
+          "num": 27,
+          "hex": "#D1E1B4"
+        },
+        {
+          "code": "B28",
+          "num": 28,
+          "hex": "#A0E6B8"
+        },
+        {
+          "code": "B29",
+          "num": 29,
+          "hex": "#C4E261"
+        },
+        {
+          "code": "B30",
+          "num": 30,
+          "hex": "#E6FCB9"
+        },
+        {
+          "code": "B31",
+          "num": 31,
+          "hex": "#B8E59C"
+        },
+        {
+          "code": "B32",
+          "num": 32,
+          "hex": "#9DAC60"
+        }
+      ]
+    },
+    {
+      "prefix": "C",
+      "count": 29,
+      "colors": [
+        {
+          "code": "C1",
+          "num": 1,
+          "hex": "#EFFCF0"
+        },
+        {
+          "code": "C2",
+          "num": 2,
+          "hex": "#AEFAFA"
+        },
+        {
+          "code": "C3",
+          "num": 3,
+          "hex": "#A0E3F6"
+        },
+        {
+          "code": "C4",
+          "num": 4,
+          "hex": "#47CCFB"
+        },
+        {
+          "code": "C5",
+          "num": 5,
+          "hex": "#0AABEC"
+        },
+        {
+          "code": "C6",
+          "num": 6,
+          "hex": "#55A9EE"
+        },
+        {
+          "code": "C7",
+          "num": 7,
+          "hex": "#3777D1"
+        },
+        {
+          "code": "C8",
+          "num": 8,
+          "hex": "#1153BD"
+        },
+        {
+          "code": "C9",
+          "num": 9,
+          "hex": "#304CC3"
+        },
+        {
+          "code": "C10",
+          "num": 10,
+          "hex": "#47B9DC"
+        },
+        {
+          "code": "C11",
+          "num": 11,
+          "hex": "#30D9DB"
+        },
+        {
+          "code": "C12",
+          "num": 12,
+          "hex": "#2B3044"
+        },
+        {
+          "code": "C13",
+          "num": 13,
+          "hex": "#D4EBF9"
+        },
+        {
+          "code": "C14",
+          "num": 14,
+          "hex": "#DDFAFE"
+        },
+        {
+          "code": "C15",
+          "num": 15,
+          "hex": "#2EC1C2"
+        },
+        {
+          "code": "C16",
+          "num": 16,
+          "hex": "#18569D"
+        },
+        {
+          "code": "C17",
+          "num": 17,
+          "hex": "#1FC3EA"
+        },
+        {
+          "code": "C18",
+          "num": 18,
+          "hex": "#1A3141"
+        },
+        {
+          "code": "C19",
+          "num": 19,
+          "hex": "#1F849E"
+        },
+        {
+          "code": "C20",
+          "num": 20,
+          "hex": "#20699E"
+        },
+        {
+          "code": "C21",
+          "num": 21,
+          "hex": "#C7E1F8"
+        },
+        {
+          "code": "C22",
+          "num": 22,
+          "hex": "#6DB4B9"
+        },
+        {
+          "code": "C23",
+          "num": 23,
+          "hex": "#CFE1F7"
+        },
+        {
+          "code": "C24",
+          "num": 24,
+          "hex": "#81C5F6"
+        },
+        {
+          "code": "C25",
+          "num": 25,
+          "hex": "#B4E4EB"
+        },
+        {
+          "code": "C26",
+          "num": 26,
+          "hex": "#40ABD2"
+        },
+        {
+          "code": "C27",
+          "num": 27,
+          "hex": "#D3E5F8"
+        },
+        {
+          "code": "C28",
+          "num": 28,
+          "hex": "#BECFE9"
+        },
+        {
+          "code": "C29",
+          "num": 29,
+          "hex": "#394587"
+        }
+      ]
+    },
+    {
+      "prefix": "D",
+      "count": 26,
+      "colors": [
+        {
+          "code": "D1",
+          "num": 1,
+          "hex": "#B2B6F2"
+        },
+        {
+          "code": "D2",
+          "num": 2,
+          "hex": "#868CDA"
+        },
+        {
+          "code": "D3",
+          "num": 3,
+          "hex": "#3253A8"
+        },
+        {
+          "code": "D4",
+          "num": 4,
+          "hex": "#1B2782"
+        },
+        {
+          "code": "D5",
+          "num": 5,
+          "hex": "#B845C7"
+        },
+        {
+          "code": "D6",
+          "num": 6,
+          "hex": "#AD7BDE"
+        },
+        {
+          "code": "D7",
+          "num": 7,
+          "hex": "#8354B2"
+        },
+        {
+          "code": "D8",
+          "num": 8,
+          "hex": "#E6D6FA"
+        },
+        {
+          "code": "D9",
+          "num": 9,
+          "hex": "#D4BBF6"
+        },
+        {
+          "code": "D10",
+          "num": 10,
+          "hex": "#331B4B"
+        },
+        {
+          "code": "D11",
+          "num": 11,
+          "hex": "#BDBAE3"
+        },
+        {
+          "code": "D12",
+          "num": 12,
+          "hex": "#E192C4"
+        },
+        {
+          "code": "D13",
+          "num": 13,
+          "hex": "#AC0E82"
+        },
+        {
+          "code": "D14",
+          "num": 14,
+          "hex": "#832993"
+        },
+        {
+          "code": "D15",
+          "num": 15,
+          "hex": "#351F85"
+        },
+        {
+          "code": "D16",
+          "num": 16,
+          "hex": "#E7D5DB"
+        },
+        {
+          "code": "D17",
+          "num": 17,
+          "hex": "#C7D3EE"
+        },
+        {
+          "code": "D18",
+          "num": 18,
+          "hex": "#A164C4"
+        },
+        {
+          "code": "D19",
+          "num": 19,
+          "hex": "#DDC3DC"
+        },
+        {
+          "code": "D20",
+          "num": 20,
+          "hex": "#9339A4"
+        },
+        {
+          "code": "D21",
+          "num": 21,
+          "hex": "#910894"
+        },
+        {
+          "code": "D22",
+          "num": 22,
+          "hex": "#36388A"
+        },
+        {
+          "code": "D23",
+          "num": 23,
+          "hex": "#ECE2FB"
+        },
+        {
+          "code": "D24",
+          "num": 24,
+          "hex": "#7F85E2"
+        },
+        {
+          "code": "D25",
+          "num": 25,
+          "hex": "#4A50BF"
+        },
+        {
+          "code": "D26",
+          "num": 26,
+          "hex": "#E3C7F9"
+        }
+      ]
+    },
+    {
+      "prefix": "E",
+      "count": 24,
+      "colors": [
+        {
+          "code": "E1",
+          "num": 1,
+          "hex": "#FBD6D5"
+        },
+        {
+          "code": "E2",
+          "num": 2,
+          "hex": "#FCC6E0"
+        },
+        {
+          "code": "E3",
+          "num": 3,
+          "hex": "#FCB8E3"
+        },
+        {
+          "code": "E4",
+          "num": 4,
+          "hex": "#E6689E"
+        },
+        {
+          "code": "E5",
+          "num": 5,
+          "hex": "#F554A0"
+        },
+        {
+          "code": "E6",
+          "num": 6,
+          "hex": "#E94176"
+        },
+        {
+          "code": "E7",
+          "num": 7,
+          "hex": "#C53372"
+        },
+        {
+          "code": "E8",
+          "num": 8,
+          "hex": "#FAE1EC"
+        },
+        {
+          "code": "E9",
+          "num": 9,
+          "hex": "#E772CB"
+        },
+        {
+          "code": "E10",
+          "num": 10,
+          "hex": "#CC3B91"
+        },
+        {
+          "code": "E11",
+          "num": 11,
+          "hex": "#FBE0D6"
+        },
+        {
+          "code": "E12",
+          "num": 12,
+          "hex": "#F791C2"
+        },
+        {
+          "code": "E13",
+          "num": 13,
+          "hex": "#A60F5E"
+        },
+        {
+          "code": "E14",
+          "num": 14,
+          "hex": "#F5C5B9"
+        },
+        {
+          "code": "E15",
+          "num": 15,
+          "hex": "#F7BFB6"
+        },
+        {
+          "code": "E16",
+          "num": 16,
+          "hex": "#FCE4E1"
+        },
+        {
+          "code": "E17",
+          "num": 17,
+          "hex": "#FCE9EB"
+        },
+        {
+          "code": "E18",
+          "num": 18,
+          "hex": "#F9CBDE"
+        },
+        {
+          "code": "E19",
+          "num": 19,
+          "hex": "#FBBED8"
+        },
+        {
+          "code": "E20",
+          "num": 20,
+          "hex": "#DECAD1"
+        },
+        {
+          "code": "E21",
+          "num": 21,
+          "hex": "#BB9EA7"
+        },
+        {
+          "code": "E22",
+          "num": 22,
+          "hex": "#B3889D"
+        },
+        {
+          "code": "E23",
+          "num": 23,
+          "hex": "#947988"
+        },
+        {
+          "code": "E24",
+          "num": 24,
+          "hex": "#DDBDE6"
+        }
+      ]
+    },
+    {
+      "prefix": "F",
+      "count": 25,
+      "colors": [
+        {
+          "code": "F1",
+          "num": 1,
+          "hex": "#FA977D"
+        },
+        {
+          "code": "F2",
+          "num": 2,
+          "hex": "#F73E4C"
+        },
+        {
+          "code": "F3",
+          "num": 3,
+          "hex": "#F64C47"
+        },
+        {
+          "code": "F4",
+          "num": 4,
+          "hex": "#F42A3C"
+        },
+        {
+          "code": "F5",
+          "num": 5,
+          "hex": "#E1072B"
+        },
+        {
+          "code": "F6",
+          "num": 6,
+          "hex": "#953330"
+        },
+        {
+          "code": "F7",
+          "num": 7,
+          "hex": "#951A37"
+        },
+        {
+          "code": "F8",
+          "num": 8,
+          "hex": "#B6062B"
+        },
+        {
+          "code": "F9",
+          "num": 9,
+          "hex": "#E0697A"
+        },
+        {
+          "code": "F10",
+          "num": 10,
+          "hex": "#86482C"
+        },
+        {
+          "code": "F11",
+          "num": 11,
+          "hex": "#57211D"
+        },
+        {
+          "code": "F12",
+          "num": 12,
+          "hex": "#F4526A"
+        },
+        {
+          "code": "F13",
+          "num": 13,
+          "hex": "#E85C51"
+        },
+        {
+          "code": "F14",
+          "num": 14,
+          "hex": "#F5A09A"
+        },
+        {
+          "code": "F15",
+          "num": 15,
+          "hex": "#CA0C25"
+        },
+        {
+          "code": "F16",
+          "num": 16,
+          "hex": "#FBC3AF"
+        },
+        {
+          "code": "F17",
+          "num": 17,
+          "hex": "#E89D82"
+        },
+        {
+          "code": "F18",
+          "num": 18,
+          "hex": "#CF804E"
+        },
+        {
+          "code": "F19",
+          "num": 19,
+          "hex": "#BF454A"
+        },
+        {
+          "code": "F20",
+          "num": 20,
+          "hex": "#CE9294"
+        },
+        {
+          "code": "F21",
+          "num": 21,
+          "hex": "#F5B7C6"
+        },
+        {
+          "code": "F22",
+          "num": 22,
+          "hex": "#FAC3D0"
+        },
+        {
+          "code": "F23",
+          "num": 23,
+          "hex": "#ED8173"
+        },
+        {
+          "code": "F24",
+          "num": 24,
+          "hex": "#E59BAD"
+        },
+        {
+          "code": "F25",
+          "num": 25,
+          "hex": "#DE5251"
+        }
+      ]
+    },
+    {
+      "prefix": "G",
+      "count": 21,
+      "colors": [
+        {
+          "code": "G1",
+          "num": 1,
+          "hex": "#FDE6D3"
+        },
+        {
+          "code": "G2",
+          "num": 2,
+          "hex": "#FACBB1"
+        },
+        {
+          "code": "G3",
+          "num": 3,
+          "hex": "#F4C7AD"
+        },
+        {
+          "code": "G4",
+          "num": 4,
+          "hex": "#E1B48B"
+        },
+        {
+          "code": "G5",
+          "num": 5,
+          "hex": "#EEB153"
+        },
+        {
+          "code": "G6",
+          "num": 6,
+          "hex": "#E49C35"
+        },
+        {
+          "code": "G7",
+          "num": 7,
+          "hex": "#995C3D"
+        },
+        {
+          "code": "G8",
+          "num": 8,
+          "hex": "#6F3A33"
+        },
+        {
+          "code": "G9",
+          "num": 9,
+          "hex": "#E6B48D"
+        },
+        {
+          "code": "G10",
+          "num": 10,
+          "hex": "#CF8F49"
+        },
+        {
+          "code": "G11",
+          "num": 11,
+          "hex": "#E2C59F"
+        },
+        {
+          "code": "G12",
+          "num": 12,
+          "hex": "#F5C090"
+        },
+        {
+          "code": "G13",
+          "num": 13,
+          "hex": "#B36D4F"
+        },
+        {
+          "code": "G14",
+          "num": 14,
+          "hex": "#955E4D"
+        },
+        {
+          "code": "G15",
+          "num": 15,
+          "hex": "#F8EFDC"
+        },
+        {
+          "code": "G16",
+          "num": 16,
+          "hex": "#EFD0B9"
+        },
+        {
+          "code": "G17",
+          "num": 17,
+          "hex": "#79514A"
+        },
+        {
+          "code": "G18",
+          "num": 18,
+          "hex": "#FDE5D3"
+        },
+        {
+          "code": "G19",
+          "num": 19,
+          "hex": "#D87A42"
+        },
+        {
+          "code": "G20",
+          "num": 20,
+          "hex": "#9D462E"
+        },
+        {
+          "code": "G21",
+          "num": 21,
+          "hex": "#B98462"
+        }
+      ]
+    },
+    {
+      "prefix": "H",
+      "count": 23,
+      "colors": [
+        {
+          "code": "H1",
+          "num": 1,
+          "hex": "#FEFBFD"
+        },
+        {
+          "code": "H2",
+          "num": 2,
+          "hex": "#FBFEFE"
+        },
+        {
+          "code": "H3",
+          "num": 3,
+          "hex": "#B6B4B9"
+        },
+        {
+          "code": "H4",
+          "num": 4,
+          "hex": "#89878D"
+        },
+        {
+          "code": "H5",
+          "num": 5,
+          "hex": "#474749"
+        },
+        {
+          "code": "H6",
+          "num": 6,
+          "hex": "#2E2C2A"
+        },
+        {
+          "code": "H7",
+          "num": 7,
+          "hex": "#020100"
+        },
+        {
+          "code": "H8",
+          "num": 8,
+          "hex": "#E5D9DD"
+        },
+        {
+          "code": "H9",
+          "num": 9,
+          "hex": "#F3ECF3"
+        },
+        {
+          "code": "H10",
+          "num": 10,
+          "hex": "#F3EAEE"
+        },
+        {
+          "code": "H11",
+          "num": 11,
+          "hex": "#D4CFD5"
+        },
+        {
+          "code": "H12",
+          "num": 12,
+          "hex": "#FCE4E0"
+        },
+        {
+          "code": "H13",
+          "num": 13,
+          "hex": "#F4DECC"
+        },
+        {
+          "code": "H14",
+          "num": 14,
+          "hex": "#D4D6CD"
+        },
+        {
+          "code": "H15",
+          "num": 15,
+          "hex": "#A0A5A0"
+        },
+        {
+          "code": "H16",
+          "num": 16,
+          "hex": "#211411"
+        },
+        {
+          "code": "H17",
+          "num": 17,
+          "hex": "#F7E9E6"
+        },
+        {
+          "code": "H18",
+          "num": 18,
+          "hex": "#FDFBF5"
+        },
+        {
+          "code": "H19",
+          "num": 19,
+          "hex": "#F6F4EC"
+        },
+        {
+          "code": "H20",
+          "num": 20,
+          "hex": "#9C9CA0"
+        },
+        {
+          "code": "H21",
+          "num": 21,
+          "hex": "#FDFBE9"
+        },
+        {
+          "code": "H22",
+          "num": 22,
+          "hex": "#D0CBD0"
+        },
+        {
+          "code": "H23",
+          "num": 23,
+          "hex": "#9A9E93"
+        }
+      ]
+    },
+    {
+      "prefix": "M",
+      "count": 15,
+      "colors": [
+        {
+          "code": "M1",
+          "num": 1,
+          "hex": "#C0C6C0"
+        },
+        {
+          "code": "M2",
+          "num": 2,
+          "hex": "#90A08B"
+        },
+        {
+          "code": "M3",
+          "num": 3,
+          "hex": "#6D7C7B"
+        },
+        {
+          "code": "M4",
+          "num": 4,
+          "hex": "#E6D5C5"
+        },
+        {
+          "code": "M5",
+          "num": 5,
+          "hex": "#D6CDB4"
+        },
+        {
+          "code": "M6",
+          "num": 6,
+          "hex": "#B4A78D"
+        },
+        {
+          "code": "M7",
+          "num": 7,
+          "hex": "#B4A49C"
+        },
+        {
+          "code": "M8",
+          "num": 8,
+          "hex": "#AC8482"
+        },
+        {
+          "code": "M9",
+          "num": 9,
+          "hex": "#A3896D"
+        },
+        {
+          "code": "M10",
+          "num": 10,
+          "hex": "#C7B6BF"
+        },
+        {
+          "code": "M11",
+          "num": 11,
+          "hex": "#9B7D8E"
+        },
+        {
+          "code": "M12",
+          "num": 12,
+          "hex": "#6D4848"
+        },
+        {
+          "code": "M13",
+          "num": 13,
+          "hex": "#CF9777"
+        },
+        {
+          "code": "M14",
+          "num": 14,
+          "hex": "#C57968"
+        },
+        {
+          "code": "M15",
+          "num": 15,
+          "hex": "#7A807B"
+        }
+      ]
+    }
+  ]
+};
 
 /* ===================== 色号主数据（内置只读） ===================== */
 const COLORS = [], BY_CODE = {}, FAMILIES = [];
@@ -480,47 +1896,100 @@ DATA.series.forEach(s => {
 });
 
 /* ===================== 状态 ===================== */
-const KEY = 'bean-stock-v5';
+/**
+ * 模型 v6：库存只有一层。
+ *   stock   —— 每个「色号 + 直径」一行，只有 qty（颗数）一个权威值
+ *   sources —— 品牌 / 店铺 / 散装，只是入库时的来源标签，不进库存维度
+ *   inLog   —— 入库流水，记着这批从哪来、当时称了多少克
+ *
+ * 为什么这么分：录入时区分来源是为了算数量（一袋 60 g 直接换算成颗数），
+ * 买回来倒进盒子里之后就是同一堆豆子。扣减只在 stock.qty 上做减法，
+ * 永远不需要问"从哪个牌子扣"。
+ */
+const KEY = 'bean-stock-v6';
 
-function blank(){ return { types: [], stock: {}, logs: [], seq: 10 }; }
+function blank(){
+  return { sources: [], dias: [], stock: {}, inLog: [], logs: [],
+           patterns: [], seq: 10, warn: 500, pseq: 1 };
+}
 
 function seed(){
   const s = blank(), now = Date.now(), D = 86400000;
-  s.types = [
-    // swatch：这个牌子下按实物校正过的色值（只影响该品牌的色块显示）
-    { id:'t1', brand:'MARD 原厂', dia:2.6, label:'迷你', gpb:0.0190, cn:60, cm:1.14, cat: now-D*3,
+  s.dias = [2.6];
+  s.sources = [
+    // gpb：这个来源的颗重，只在「称重入库」和「称重校正」时用
+    { id:'s1', name:'MARD 原厂', kind:'brand', packG:60, gpb:0.0190, cat: now-D*3,
       swatch:{ A21:'#E9B7B1' } },
-    { id:'t2', brand:'散装', dia:2.6, label:'', gpb:null, cn:0, cm:null, cat:null }
+    { id:'s2', name:'散装 · 某店', kind:'shop', packG:null, gpb:null, cat:null, swatch:{} }
   ];
-  [ ['t1','A21',{net:37.8,src:'w',state:'m',at:now-D*2}],
-    ['t1','A1',{net:30.0,src:'w',state:'m',at:now-D*2}],
-    ['t1','A9',{net:15.2,src:'w',state:'m',at:now-D*5}],
-    ['t1','B9',{net:12.0,src:'w',state:'e',at:now-D*6}],
-    ['t1','H7',{net:8.5,src:'w',state:'m',at:now-D*8}],
-    ['t1','M3',{net:21.4,src:'w',state:'m',at:now-D*9}],
-    // 只有颗数、没称过重（这个型号还没标定颗重）
-    ['t2','A21',{cnt:1600,src:'c',state:'e',at:now-D*9}]
-  ].forEach(([tid, code, v]) => { s.stock[tid+'|'+code] = v; });
+
+  // 库存：qty 是唯一权威。gpb 只是"这堆豆子的平均颗重"，用来显示 ≈克数
+  // cal ＝ 最近一次量的样本（颗数 / 净重），重开标定页时接着改，只留这一份
+  const put = (code, qty, at, cal) => {
+    s.stock[code + '|2.6'] = { qty, gpb:0.019, at };
+    if (cal) s.stock[code + '|2.6'].cal = cal;
+  };
+  put('A21', 3589, now-D*2, { n:1989, m:37.8, at:now-D*2 });
+  put('A1',  1579, now-D*2, { n:1579, m:30.0, at:now-D*2 });
+  put('A9',   800, now-D*5);
+  put('B9',   474, now-D*6);
+  put('H7',   447, now-D*8);
+  put('M3',  1126, now-D*9);
+
+  s.inLog = [
+    { ts:now-D*9, code:'A21', dia:2.6, qty:1600, g:null, sid:'s2' },
+    { ts:now-D*2, code:'A21', dia:2.6, qty:1989, g:37.8, sid:'s1' },
+    { ts:now-D*2, code:'A1',  dia:2.6, qty:1579, g:30.0, sid:'s1' }
+  ];
+
+  s.patterns = [
+    { id:'p1', name:'小蘑菇', img:null, dia:2.6, at:now-D*1,
+      items:{ A21:120, A1:60, B7:80, C9:40, H7:90, A9:30 } },
+    { id:'p2', name:'练手方块', img:null, dia:2.6, at:now-D*4,
+      items:{ A21:200, A1:100 } }
+  ];
+  s.pseq = 3;
+  s.patSort = 'need';   // 色号清单默认按需要颗数倒序
 
   s.logs = [
-    { ts:now-D*2, tid:'t1', code:'A21', type:'SET', note:'设为 37.8 g（称重），约 1989 颗' },
-    { ts:now-D*2, tid:'t1', code:'A1',  type:'SET', note:'设为 30.0 g（称重），约 1579 颗' },
-    { ts:now-D*3, tid:'t1', code:null,  type:'CALIBRATE', note:'标定 MARD 原厂 · 2.6mm：60 颗 1.14 g → 0.0190 g/颗' },
-    { ts:now-D*6, tid:'t1', code:'B9',  type:'SUB', note:'扣减 25 颗 → 12.0 g' },
-    { ts:now-D*9, tid:'t2', code:'A21', type:'SET', note:'记为 1600 颗（未标定颗重，暂无重量）' }
+    { ts:now-D*2, sid:'s1', code:'A21', type:'IN',
+      note:'+1,989 颗 · 称 37.80 g ÷ 0.0190 g/颗 → 共 3,589 颗' },
+    { ts:now-D*2, sid:'s1', code:'A1', type:'IN',
+      note:'+1,579 颗 · 称 30.00 g ÷ 0.0190 g/颗 → 共 1,579 颗' },
+    { ts:now-D*3, sid:null, code:'A21', type:'CALIBRATE',
+      note:'2.6mm 颗重 0.0190 g/颗（1,989 颗 37.80 g）' },
+    { ts:now-D*9, sid:'s2', code:'A21', type:'IN',
+      note:'+1,600 颗 · 按颗 → 共 1,600 颗' }
   ];
   return s;
 }
 
 function load(){
   try {
-    const raw = localStorage.getItem(KEY);
+    let raw = localStorage.getItem(KEY);
+    // Android 壳：localStorage 被清掉（清缓存 / 重装）时，从应用私有目录的备份顶上
+    if (!raw && window.AndroidBridge && AndroidBridge.loadJson){
+      try {
+        const b = AndroidBridge.loadJson();
+        if (b) { raw = b; localStorage.setItem(KEY, b); }
+      } catch(e){}
+    }
     if (!raw) return seed();
     const o = JSON.parse(raw);
-    return { types:o.types||[], stock:o.stock||{}, logs:o.logs||[], seq:o.seq||10 };
+    return { sources:o.sources||[], dias:o.dias||[], stock:o.stock||{}, inLog:o.inLog||[],
+             logs:o.logs||[], patterns:o.patterns||[],
+             seq:o.seq||10, pseq:o.pseq||1,
+             warn: o.warn === undefined ? 500 : o.warn };
   } catch(e){ return seed(); }
 }
-function save(){ localStorage.setItem(KEY, JSON.stringify(S)); }
+function save(){
+  const json = JSON.stringify(S);
+  localStorage.setItem(KEY, json);
+  // 壳里再多存一份到 filesDir，localStorage 不可靠（清缓存/换机）
+  if (window.AndroidBridge && AndroidBridge.saveJson){
+    try { AndroidBridge.saveJson(json); } catch(e){}
+  }
+}
 let S = load();
 
 /* ===================== 工具 ===================== */
@@ -534,12 +2003,12 @@ function textStyle(hex){
   return lum(hex) > 0.42 ? 'color:#1a1a1a' : 'color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5)';
 }
 function hexOf(code){ return BY_CODE[code].hex; }
-/** MARD 标准色（内置，不可改） */
+/** MARD 标准色（内置，不可改）。库存格子一律用它 */
 function hexStd(code){ return BY_CODE[code].hex; }
-/** 某型号下该色号的实际色值：用户按实物校正过就用它，否则用 MARD 标准色 */
-function hexFor(tid, code){
-  const t = tid ? typeOf(tid) : null;
-  return (t && t.swatch && t.swatch[code]) || BY_CODE[code].hex;
+/** 某个来源下该色号的实际色值：只在来源页和入库流水里展示 */
+function hexFor(sid, code){
+  const s = sid ? sourceOf(sid) : null;
+  return (s && s.swatch && s.swatch[code]) || BY_CODE[code].hex;
 }
 function fmt(n,d=2){ return Number(n||0).toLocaleString('zh-CN',{minimumFractionDigits:d,maximumFractionDigits:d}); }
 function intFmt(n){ return Number(n||0).toLocaleString('zh-CN'); }
@@ -553,60 +2022,694 @@ function timeStr(ts){
   const d = new Date(ts), p = n => String(n).padStart(2,'0');
   return `${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
-function typeOf(id){ return S.types.find(t => t.id === id); }
-function typeLabel(t){ return t.brand + ' · ' + String(t.dia).replace(/\.0$/,'') + 'mm'; }
-function skuOf(tid, code){ return S.stock[tid + '|' + code] || null; }
+
+/* ---------- 来源（品牌 / 店铺 / 散装） ---------- */
+function sourceOf(id){ return S.sources.find(x => x.id === id); }
+function sourceLabel(s){ return s ? s.name : '未记来源'; }
+
+/* ---------- 库存：颜色 + 直径 = 一行 ---------- */
+function diaKey(code, dia){ return code + '|' + String(Number(dia)); }
+function stockAt(code, dia){ return S.stock[diaKey(code, dia)] || null; }
+function qtyAt(code, dia){ const it = stockAt(code, dia); return it ? (it.qty || 0) : 0; }
+
+/** 某色号在某直径下的完整状态。has=true 只要这行在，哪怕已经 0 颗 */
+function statRow(code, dia){
+  const it = stockAt(code, dia);
+  if (!it) return { has:false, qty:0, net:null, gpb:null, cal:null, at:null };
+  const gpb = it.gpb > 0 ? it.gpb : null;
+  return { has:true, qty: it.qty || 0, net: gpb ? (it.qty || 0) * gpb : null,
+           gpb, cal: it.cal || null, at: it.at || null };
+}
+
+function writeRow(code, dia, qty, gpb, at){
+  const k = diaKey(code, dia);
+  const cur = S.stock[k];
+  const g = (gpb !== undefined && gpb !== null) ? gpb : (cur && cur.gpb) || null;
+  const row = { qty: Math.max(0, Math.round(qty)), gpb: g, at: at || Date.now() };
+  if (cur && cur.cal) row.cal = cur.cal;      // 标定样本跟着行走，别被扣减/入库顺手抹掉
+  S.stock[k] = row;
+  if (!S.dias.some(d => Number(d) === Number(dia))){ S.dias.push(Number(dia)); S.dias.sort((a,b)=>a-b); }
+}
 
 /**
- * 库存项的真实状态。
- * src='w'：重量是权威值（称过），颗数由颗重推出来；
- * src='c'：颗数是权威值（数出来的/只记了个数），重量由颗重推出来。
- * 所以重新标定颗重时，按颗记的记录颗数不会变，按克称的记录会重算颗数。
+ * 入库：把来源、克重记进流水，库存只增加颗数。
+ * gpbIn 是「这一行的颗重」，由标定决定；给了就用它，不再拿 g÷qty 反推
+ * （g 是这次入库的克数、qty 是这次入库的颗数，两者都只代表「增量」，
+ *   反推会得到同一批的平均值，但一旦有取整就会把标定值带偏）。
  */
-function statOf(t, it){
-  if (!it) return { net:null, cnt:0, est:false, has:false };
-  const gpb = (t && t.gpb > 0) ? t.gpb : 0;
-  if (it.src === 'c' && it.cnt > 0)
-    return { net: gpb ? it.cnt * gpb : null, cnt:it.cnt, est:gpb > 0, has:true };
-  if (it.net > 0)
-    return { net:it.net, cnt: gpb ? Math.round(it.net/gpb) : (it.cnt > 0 ? it.cnt : null),
-             est:false, has:true };
-  if (it.cnt > 0)
-    return { net: gpb ? it.cnt * gpb : null, cnt:it.cnt, est:gpb > 0, has:true };
-  return { net:null, cnt:0, est:false, has:false };
+function stockIn(code, dia, qty, g, sid, gpbIn){
+  const src = sid ? sourceOf(sid) : null;
+  const cur = stockAt(code, dia);
+  const gpb = (gpbIn > 0) ? gpbIn
+            : (g > 0 && qty > 0) ? g / qty
+            : (cur && cur.gpb) || (src && src.gpb) || null;
+  writeRow(code, dia, (cur ? cur.qty : 0) + qty, gpb);
+  S.inLog.unshift({ ts:Date.now(), code, dia:Number(dia), qty, g: g || null, sid: sid || null });
+  if (S.inLog.length > 300) S.inLog.length = 300;
+  return gpb;
 }
 
-function agg(code){
-  let count=0, weight=0, brands=0, uncounted=0, hasEst=false, lastAt=null, noW=0;
-  S.types.forEach(t => {
-    const it = skuOf(t.id, code), s = statOf(t, it);
-    if (!s.has) return;
-    brands++;
-    if (s.net !== null) weight += s.net; else noW++;
-    if (s.cnt !== null) count += s.cnt; else uncounted++;
-    if (s.est) hasEst = true;
+/**
+ * 加总。dia 有值时只算这一个直径；不给就是所有直径合计。
+ * lines = 有记录的直径条数（>1 说明这个色号有多个规格）
+ */
+function agg(code, dia){
+  const ds = dia ? [dia] : S.dias;
+  let count = 0, weight = 0, lines = 0, lastAt = null, missingW = 0;
+  ds.forEach(d => {
+    const it = stockAt(code, d);
+    if (!it) return;
+    lines++;
+    count += it.qty || 0;
+    if (it.gpb > 0) weight += (it.qty || 0) * it.gpb; else missingW++;
     if (it.at && (!lastAt || it.at > lastAt)) lastAt = it.at;
   });
-  return { count, weight, brands, uncounted, hasEst, lastAt, noW };
+  return { count, weight, lines, lastAt, missingW, hasW: missingW === 0 };
 }
 function totalCount(){ let n = 0; COLORS.forEach(c => { n += agg(c.code).count; }); return n; }
-function stockedColors(){ let n = 0; COLORS.forEach(c => { if (agg(c.code).weight > 0) n++; }); return n; }
-const TYPE_CN = { SET:'设为', SUB:'扣减', ADD:'增加', CALIBRATE:'标定',
-                  COLOR_FIX:'改色', BRAND_NEW:'新品牌', BRAND_EDIT:'改品牌', ARCHIVE:'删除' };
-function logIt(tid, code, type, note){
-  S.logs.unshift({ ts:Date.now(), tid, code, type, note });
+function stockedColors(){ let n = 0; COLORS.forEach(c => { if (agg(c.code).count > 0) n++; }); return n; }
+
+const TYPE_CN = { SET:'设为', SUB:'扣减', ADD:'增加', IN:'入库', CALIBRATE:'标定',
+                  BULK_INIT:'初始化', WARN_SET:'预警', SWATCH_SET:'实际色',
+                  SRC_NEW:'新来源', SRC_EDIT:'改来源', ARCHIVE:'删除',
+                  PAT_NEW:'新图案', PAT_DEL:'删图案', BATCH_SUB:'整图扣减', UNDO:'撤销' };
+
+function logIt(sid, code, type, note){
+  S.logs.unshift({ ts:Date.now(), sid, code, type, note });
   if (S.logs.length > 500) S.logs.length = 500;
 }
 
 /* ===================== 视图状态 ===================== */
-let tab = 'stock';
+let tab = 'pat';
 let filter = 'all';
 let sortMode = 'code';      // 'code' 按系列+编号 / 'recent' 最近操作在前
 let pickedCode = null;      // 点选搜索最后定位到的色号，仅用于按钮上的回显
 let curCode = null;
-let curType = null;
+let curSource = null;
 
-/* ===================== ① 库存页 ===================== */
+/* ===================== ① 图案页 ===================== */
+let curPat = null;
+
+function patOf(id){ return S.patterns.find(p => p.id === id); }
+
+/** 这个图案还差哪些豆子（同直径合计，不分牌子） */
+function patternStat(p){
+  const miss = [];
+  let need = 0, colors = 0;
+  Object.keys(p.items).forEach(code => {
+    const want = p.items[code];
+    if (!(want > 0)) return;
+    colors++; need += want;
+    const have = agg(code, p.dia).count || 0;
+    if (have < want) miss.push({ code, want, have, lack: want - have });
+  });
+  miss.sort((a, b) => b.lack - a.lack);
+  return { miss, need, colors, ok: miss.length === 0,
+           lackSum: miss.reduce((n, m) => n + m.lack, 0) };
+}
+
+/** 库里实际有货的直径，按颗数从多到少 */
+function diaList(){
+  const m = {};
+  S.dias.forEach(d => {
+    let n = 0;
+    COLORS.forEach(c => { n += qtyAt(c.code, d); });
+    m[d] = n;
+  });
+  return Object.keys(m).map(Number).sort((a, b) => m[b] - m[a]);
+}
+function defaultDia(){
+  const ds = diaList();
+  return ds.length ? ds[0] : 2.6;
+}
+
+function thumbHtml(p){
+  if (p.img) return `<div class="thumb"><img src="${p.img}" alt=""></div>`;
+  const codes = Object.keys(p.items).slice(0, 9);
+  const cells = Array.from({ length: 9 }, (_, i) =>
+    `<i style="background:${codes[i] ? hexOf(codes[i]) : '#f1f3f5'}"></i>`).join('');
+  return `<div class="thumb">${cells}</div>`;
+}
+
+function missRows(st){
+  return `<div class="miss">` + st.miss.map(m => `
+    <div class="row">
+      <div class="sw" style="background:${hexOf(m.code)};${textStyle(hexOf(m.code))}">${m.code.replace(/[A-Z]/g,'')}</div>
+      <div class="c"><b>${m.code}</b> <span class="d">需 ${intFmt(m.want)} / 有 ${intFmt(m.have)}</span></div>
+      <div class="n">缺 ${intFmt(m.lack)}</div>
+    </div>`).join('') + `</div>`;
+}
+
+function renderPatterns(){
+  $('pt-sub').textContent = S.patterns.length ? `${S.patterns.length} 个` : '';
+  const box = $('pat-body');
+  if (!S.patterns.length){
+    box.innerHTML = `<div class="empty">还没有图案<br>
+      <span style="font-size:12px;color:var(--faint)">点右上角「新建」，选一张图，再逐个加色号和数量</span></div>`;
+    return;
+  }
+  box.innerHTML = S.patterns.map(p => {
+    const st = patternStat(p);
+    return `<div class="grp" style="margin-bottom:11px">
+      <div class="pat" data-p="${p.id}">
+        ${thumbHtml(p)}
+        <div class="pm">
+          <b>${p.name}</b>
+          <small>${st.colors} 色 · 共 ${intFmt(st.need)} 颗</small>
+          <span class="st ${st.ok ? 'ok' : 'no'}" data-miss="${p.id}" data-open="0">
+            ${st.ok ? '库存够' : `缺 ${st.miss.length} 色 · ${intFmt(st.lackSum)} 颗`}
+          </span>
+        </div>
+      </div>
+      <div id="miss-${p.id}" style="display:none">${missRows(st)}</div>
+    </div>`;
+  }).join('');
+
+  box.querySelectorAll('.pat').forEach(el => {
+    el.onclick = () => openPattern(el.dataset.p);
+  });
+  box.querySelectorAll('.st').forEach(el => {
+    el.onclick = ev => {
+      ev.stopPropagation();
+      const pid = el.dataset.miss, panel = $('miss-' + pid);
+      const open = el.dataset.open === '1';
+      el.dataset.open = open ? '0' : '1';
+      panel.style.display = open ? 'none' : '';
+      if (!open && !patternStat(patOf(pid)).ok){
+        el.innerHTML = el.innerHTML;  // 保持文案，只切换箭头感
+      }
+    };
+  });
+}
+
+/* ===================== 图案详情 ===================== */
+/**
+ * 色号清单的排序方式。默认「数量多→少」，因为拼的时候是从最多的那种颜色先下手；
+ * 补货的场景再用「缺料优先」。选过的值存在 S.patSort 里，跨图案、跨次打开都记住。
+ */
+const PAT_SORTS = [
+  { k:'need',    t:'数量多→少', short:'数量↓' },
+  { k:'needAsc', t:'数量少→多', short:'数量↑' },
+  { k:'lack',    t:'缺料优先',   short:'缺料优先' },
+  { k:'code',    t:'色号顺序',   short:'色号顺序' }
+];
+function cmpCode(a, b){ return String(a).localeCompare(String(b), 'en', { numeric:true }); }
+function patSortKey(){
+  const k = S.patSort;
+  return PAT_SORTS.some(x => x.k === k) ? k : 'need';
+}
+/** 清单与扣减确认页共用同一个顺序，两处对不上会看得很别扭 */
+function patRows(p){
+  const rows = Object.keys(p.items).map(code => {
+    const want = Math.max(0, p.items[code] || 0);
+    const have = agg(code, p.dia).count || 0;
+    return { code, want, have, lack: Math.max(0, want - have) };
+  });
+  const by = {
+    need:    (a,b) => (b.want - a.want) || cmpCode(a.code, b.code),
+    needAsc: (a,b) => (a.want - b.want) || cmpCode(a.code, b.code),
+    lack:    (a,b) => (b.lack - a.lack) || (b.want - a.want) || cmpCode(a.code, b.code),
+    code:    (a,b) => cmpCode(a.code, b.code)
+  };
+  return rows.sort(by[patSortKey()]);
+}
+
+/**
+ * 图案的颜色分布条：按每个色号的颗数占比分宽度，主色一眼就看出来。
+ * cls = huebig（没图，96px 高）/ huthin（有图，压成图下 7px 细条）
+ */
+function hueBar(items, cls){
+  const codes = Object.keys(items || {});
+  if (!codes.length) return `<div class="${cls}"><i style="background:#e9ebef;flex:1 0 0"></i></div>`;
+  const total = codes.reduce((a, c) => a + Math.max(1, items[c] || 0), 0);
+  // 色号少的时候把代码写进色块，色带本身就成了一目了然的配色清单
+  const showCode = cls === 'huebig' && codes.length <= 8;
+  return `<div class="${cls}">${codes.map(c => {
+    const w = Math.max(1, items[c] / total * 100);
+    const hx = hexOf(c);
+    // 太窄的块放不下文字，宁可不写，也不要半个字被切掉
+    const txt = (showCode && w >= 10) ? c : '';
+    return `<i style="background:${hx};flex:${w.toFixed(2)} 1 0${txt ? ';' + textStyle(hx) : ''}">${txt}</i>`;
+  }).join('')}</div>`;
+}
+
+function openPattern(id){
+  const p = patOf(id);
+  if (!p) return;
+  // 撤销只在同一图案的详情页内有效，切到别的图案就作废
+  if (lastBatch && lastBatch.pid !== id) lastBatch = null;
+  curPat = id;
+  const st = patternStat(p);
+  $('patd-title').textContent = p.name;
+
+  const list = patRows(p);
+  const sortKey = patSortKey();
+  const sortLabel = (PAT_SORTS.find(x => x.k === sortKey) || PAT_SORTS[0]).short;
+
+  $('patd-body').innerHTML = `
+    ${(lastBatch && lastBatch.pid === id) ? `
+      <div class="undo">
+        <div class="c">
+          <b>已扣减 ${lastBatch.colors} 色 ${intFmt(lastBatch.need)} 颗</b>
+          <small>${timeStr(lastBatch.at)} · 切到别的图案后不能再撤销</small>
+        </div>
+        <button class="btn" id="patd-undobtn">撤销</button>
+      </div>` : ''}
+
+    <div class="pathead${p.img ? ' hasimg' : ''}">
+      ${p.img
+        ? `<img class="patimg" id="patd-img" src="${p.img}" alt="">
+           <div class="imgact">
+             <button class="dark" id="patd-imgbtn">换图</button>
+             <button id="patd-imgdel">移除</button>
+           </div>
+           ${hueBar(p.items, 'huthin')}`
+        : `<button class="huecard" id="patd-imgbtn">
+             ${hueBar(p.items, 'huebig')}
+             <span class="huehint">${Object.keys(p.items).length} 种颜色 · <em>＋ 加一张图</em>（可选）</span>
+           </button>`}
+      <input type="file" id="patd-file" accept="image/*" style="display:none">
+    </div>
+
+    <div class="sect-t">够不够拼<span class="sp">${p.dia ? String(p.dia).replace(/\.0$/,"") + 'mm · ' : ''}${st.colors} 色 · 共 ${intFmt(st.need)} 颗</span></div>
+    <div class="grp" style="padding:14px">
+      ${st.ok
+        ? `<div style="font-size:15px;font-weight:600;color:var(--ok)">库存够，可以直接拼</div>
+           <div style="font-size:12px;color:var(--muted);margin-top:5px;line-height:1.7">
+             ${st.colors} 个色号的现有颗数都够用（同直径合计，不分牌子）。</div>
+           <button class="btn pri" id="patd-consume" style="margin-top:12px">整图扣减 ${intFmt(st.need)} 颗</button>
+           ${p.lastUse ? `<div style="font-size:11px;color:var(--faint);margin-top:9px">
+             上次扣减：${timeStr(p.lastUse)}</div>` : ''}`
+        : `<div style="font-size:15px;font-weight:600;color:#b3271c">
+             还差 ${st.miss.length} 个色号，合计 ${intFmt(st.lackSum)} 颗</div>
+           <div style="font-size:12px;color:var(--muted);margin-top:5px;line-height:1.7">
+             按同直径合计算的，明细在下面。补够之后才能整图扣减。</div>
+           <button class="btn pri" id="patd-copy" style="margin-top:12px">复制补货清单</button>`}
+    </div>
+
+    <div class="sect-t">色号清单
+      <button class="sortbtn" id="patd-sortbtn">⇅ ${sortLabel}<i>›</i></button>
+    </div>
+    <div class="sortrow" id="patd-sortrow" style="display:none">
+      ${PAT_SORTS.map(x => `<button class="diachip${x.k === sortKey ? ' on' : ''}"
+          data-sort="${x.k}">${x.t}</button>`).join('')}
+    </div>
+    <div class="grp">${list.map(({ code, want, have, lack }) => {
+      const hx = hexOf(code);
+      return `<div class="item" data-code="${code}">
+        <div class="sw" style="background:${hx};${textStyle(hx)}">${code.replace(/[A-Z]/g,'')}</div>
+        <div class="mid">
+          <b>${code}${lack ? ' <span class="tag m" style="background:#fdecea;color:#b3271c">缺 ' + intFmt(lack) + '</span>' : ''}</b>
+          <small>需要 ${intFmt(want)} 颗 · 现有 ${intFmt(have)} 颗</small>
+        </div>
+        <button class="del" data-del="${code}">删</button>
+      </div>`;
+    }).join('')}</div>
+
+    <button class="inline-btn" id="patd-add" style="margin-top:12px">＋ 添加色号（可以连着加）</button>
+    <div style="font-size:11px;color:var(--faint);padding:12px 2px 30px;line-height:1.8">
+      点任意一行可以改需要的颗数；<br>
+      库存按<b>同直径</b>合计——拼豆不看牌子，只看颜色对不对；<br>
+      2.6mm 和 5mm 是两种豆子，不会混着算。
+    </div>
+  `;
+
+  const copyBtn = $('patd-copy');
+  if (copyBtn) copyBtn.onclick = () => copyText(orderText(p, st), copyBtn);
+
+  const conBtn = $('patd-consume');
+  if (conBtn) conBtn.onclick = () => openConsume(id);
+
+  // 排序：点标题右侧展开选项，选完记住（存 S.patSort，换图案也不变）
+  const sortBtn = $('patd-sortbtn');
+  if (sortBtn) sortBtn.onclick = () => {
+    const row = $('patd-sortrow');
+    row.style.display = (row.style.display === 'none') ? '' : 'none';
+  };
+  document.querySelectorAll('#patd-sortrow .diachip').forEach(b => {
+    b.onclick = () => {
+      S.patSort = b.dataset.sort;
+      save();
+      openPattern(id);
+      renderPatterns();
+    };
+  });
+
+  const undoBtn = $('patd-undobtn');
+  if (undoBtn) undoBtn.onclick = () => {
+    if (!confirm(`撤销这次扣减，把 ${lastBatch.colors} 色 ${intFmt(lastBatch.need)} 颗退回库存？`)) return;
+    const r = undoConsume();
+    if (!r.ok && r.reason === 'drift'){
+      const names = r.keys.map(k => k.split('|')[0]).join('、');
+      alert(`这些色号的库存在扣减之后又变过，撤销会把那些改动一起抹掉，所以不能撤销：\n\n${names}`);
+      return;
+    }
+    if (!r.ok) return;
+    openPattern(id); renderPatterns(); renderStock();
+  };
+
+  const imgBtn = $('patd-imgbtn');
+  if (imgBtn) imgBtn.onclick = () => $('patd-file').click();
+  $('patd-file').onchange = e => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    shrinkImage(f, dataUrl => {
+      p.img = dataUrl; p.at = Date.now(); save();
+      openPattern(id); renderPatterns();
+    });
+  };
+  const imgDel = $('patd-imgdel');
+  if (imgDel) imgDel.onclick = () => {
+    delete p.img; p.at = Date.now(); save();
+    openPattern(id); renderPatterns();
+  };
+
+  $('patd-body').querySelectorAll('.item').forEach(el => {
+    el.onclick = ev => {
+      if (ev.target.dataset.del) return;
+      const code = el.dataset.code;
+      numPad({
+        title: `${code} 需要多少颗`, unit:'颗', decimal:false, value: p.items[code],
+        onOk: v => { p.items[code] = Math.round(v); p.at = Date.now(); save(); openPattern(id); renderPatterns(); }
+      });
+    };
+  });
+  $('patd-body').querySelectorAll('[data-del]').forEach(b => {
+    b.onclick = ev => {
+      ev.stopPropagation();
+      const code = b.dataset.del;
+      if (!confirm(`从「${p.name}」里去掉 ${code}？`)) return;
+      delete p.items[code]; p.at = Date.now(); save();
+      openPattern(id); renderPatterns();
+    };
+  });
+  $('patd-add').onclick = () => addColors(id);
+
+  $('p-patd').classList.add('on');
+}
+
+/* ===================== 整图扣减确认页 ===================== */
+function openConsume(pid){
+  const p = patOf(pid);
+  if (!p) return;
+  const st = patternStat(p);
+  if (!st.ok){ alert('还有色号不够，先补齐再扣减。'); return; }
+
+  const plan = planConsume(p);
+
+  sheet(`
+    <div class="sh">
+      <h3>整图扣减</h3>
+      <p>把「${p.name}」的 ${st.colors} 色 ${intFmt(st.need)} 颗从库存扣掉。同色号同直径的豆子本来就当一堆算，扣完了不用管是哪家买的。</p>
+    </div>
+    <div class="sb" id="bc-body"></div>
+    <div class="acts">
+      <button class="btn" id="bc-cancel">取消</button>
+      <button class="btn pri" id="bc-ok">确认扣减</button>
+    </div>
+  `);
+
+  const box = $('bc-body');
+  box.innerHTML = `<div class="grp">` + plan.rows.map(r => {
+    const hx = hexOf(r.code);
+    return `<div class="bc">
+      <div class="bch">
+        <div class="sw" style="background:${hx};${textStyle(hx)}">${r.code.replace(/[A-Z]/g,'')}</div>
+        <div class="mid">
+          <b>${r.code}</b>
+          <div class="bcp">
+            <span class="bv">${intFmt(r.before)}</span>
+            <span class="ba">→</span>
+            <span class="bv ${r.after === 0 ? 'z' : ''}">${intFmt(r.after)}</span>
+          </div>
+        </div>
+        <div class="br"><b>扣 ${intFmt(r.qty)}</b></div>
+      </div>
+    </div>`;
+  }).join('') + `</div>
+
+  <div class="bcsum">
+    共扣 <b>${intFmt(plan.total)}</b> 颗${plan.zeroed ? `，<span class="w">${plan.zeroed} 个色号会清零</span>` : ''}
+    <br><span>扣完可以撤销，切到别的图案就不能撤了。</span>
+  </div>`;
+
+  $('bc-cancel').onclick = closeSheet;
+  $('bc-ok').onclick = () => {
+    runConsume(p, plan);
+    closeSheet();
+    openPattern(pid);
+    renderPatterns(); renderStock();
+  };
+}
+
+/* 连续录入色号：选一个 → 输数量 → 回来接着选 */
+function addColors(pid){
+  const p = patOf(pid);
+  let added = 0;
+
+  openPicker({
+    title: `给「${p.name}」加色号`,
+    sub: '点色块填数量，填完回来接着点下一个；同一系列不用重选',
+    okText: '完成',
+    onOk: closeSheet,
+    onPick(code, api){
+      numPad({
+        title: `${code} 需要多少颗`, unit:'颗', decimal:false,
+        value: p.items[code] || null,
+        onOk(v){
+          p.items[code] = Math.round(v);
+          p.at = Date.now();
+          save();
+          added++;
+          api.setSub(`已设 ${Object.keys(p.items).length} 个色号，继续点下一个；完成就点下面`);
+          openPattern(pid);
+          renderPatterns();
+        }
+      });
+    }
+  });
+}
+
+/* 补货清单文本，直接发给卖家 */
+function orderText(p, st){
+  const lines = st.miss.map(m => `${m.code}\t缺 ${m.lack} 颗（需 ${m.want} / 有 ${m.have}）`);
+  return [
+    `拼豆补货 · ${p.name}${p.dia ? '（' + String(p.dia).replace(/\.0$/,'') + 'mm）' : ''}`,
+    '————————',
+    ...lines,
+    '————————',
+    `共 ${st.miss.length} 色 ${st.lackSum} 颗（MARD 221 色标准）`
+  ].join('\n');
+}
+
+/* ===================== 整图扣减 & 撤销 ===================== */
+/**
+ * 扣减面对的永远是「颜色 + 直径」这一行，没有"从哪个牌子扣"这回事。
+ * 撤销只在当前图案详情页内有效：lastBatch 是内存变量，离开或重启即失效。
+ */
+let lastBatch = null;
+
+function planConsume(p){
+  const rows = [];
+  // 顺序跟详情页的色号清单一致（patRows），否则确认页和清单对不上
+  patRows(p).forEach(({ code }) => {
+    const want = p.items[code];
+    if (!(want > 0)) return;
+    const s = statRow(code, p.dia);
+    const have = s.has ? s.qty : 0;
+    const q = Math.min(want, have);
+    rows.push({ code, want, have, qty:q, before:have, after:have - q,
+                short: Math.max(0, want - q), has:s.has });
+  });
+  const total = rows.reduce((n, r) => n + r.qty, 0);
+  const zeroed = rows.filter(r => r.qty > 0 && r.after === 0).length;
+  return { rows, total, zeroed, ok: rows.every(r => r.short === 0) };
+}
+
+/** 从某一行扣掉 qty 颗。颗数是唯一权威值，扣完克数跟着重算 */
+function consumeRow(code, dia, qty){
+  const it = stockAt(code, dia);
+  const before = it ? (it.qty || 0) : 0;
+  const after = Math.max(0, before - qty);
+  writeRow(code, dia, after, it ? it.gpb : null);
+  return { before, after };
+}
+
+function runConsume(p, plan){
+  const snap = {};
+  let touched = 0;
+
+  plan.rows.forEach(r => {
+    if (!(r.qty > 0)) return;
+    const k = diaKey(r.code, p.dia);
+    snap[k] = { before: JSON.parse(JSON.stringify(stockAt(r.code, p.dia) || null)) };
+    consumeRow(r.code, p.dia, r.qty);
+    snap[k].after = JSON.parse(JSON.stringify(stockAt(r.code, p.dia) || null));
+    touched++;
+  });
+
+  lastBatch = {
+    pid: p.id, name: p.name, at: Date.now(), dia: p.dia,
+    snap,
+    need: plan.total,
+    colors: plan.rows.filter(r => r.qty > 0).length,
+    prevUse: p.lastUse || null
+  };
+  p.lastUse = Date.now();
+  p.at = Date.now();
+
+  logIt(null, null, 'BATCH_SUB',
+    `「${p.name}」整图扣减 ${lastBatch.colors} 色 ${intFmt(plan.total)} 颗（可撤销）`);
+
+  save();
+  return touched;
+}
+
+/**
+ * 撤销最近一次整图扣减。
+ * 先做冲突检测：受影响行在这之后被改过（手动增减、重新入库、校正…），
+ * 撤销会把那些改动一起抹掉，所以直接拒绝。
+ */
+function undoConsume(){
+  const b = lastBatch;
+  if (!b) return { ok:false, reason:'none' };
+
+  const drift = Object.keys(b.snap).filter(k => {
+    const cur = S.stock[k] || null;
+    const want = b.snap[k].after || null;
+    return JSON.stringify(cur) !== JSON.stringify(want);
+  });
+  if (drift.length) return { ok:false, reason:'drift', keys:drift };
+
+  Object.keys(b.snap).forEach(k => {
+    const v = b.snap[k].before;
+    if (v === null) delete S.stock[k];
+    else S.stock[k] = JSON.parse(JSON.stringify(v));
+  });
+  const p = patOf(b.pid);
+  if (p) p.lastUse = b.prevUse;
+
+  logIt(null, null, 'UNDO',
+    `撤销「${b.name}」的整图扣减，退回 ${b.colors} 色 ${intFmt(b.need)} 颗`);
+  lastBatch = null;
+  save();
+  return { ok:true };
+}
+
+function copyText(txt, btn){
+  const done = () => { if (btn){ const old = btn.textContent; btn.textContent = '已复制'; setTimeout(() => btn.textContent = old, 1400); } };
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(done).catch(() => fallbackCopy(txt, done));
+  } else fallbackCopy(txt, done);
+}
+function fallbackCopy(txt, done){
+  const ta = document.createElement('textarea');
+  ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); done(); } catch(e){ alert('复制失败，长按下面的文字自己选：\\n\\n' + txt); }
+  ta.remove();
+}
+
+/* ===================== 新建图案 ===================== */
+let npImg = null;
+
+function newPattern(){
+  npImg = null;
+  const ds = diaList(), dd = defaultDia();
+  let npDia = dd;
+  sheet(`
+    <div class="sh">
+      <h3>新建图案</h3>
+      <p>先放一张图（拍照或相册都行），起个名，然后逐个加色号。</p>
+    </div>
+    <div class="sb">
+      <div id="np-prev" style="height:132px;border-radius:12px;background:#f1f3f5;
+           display:flex;align-items:center;justify-content:center;color:var(--faint);
+           font-size:12.5px;overflow:hidden;margin-top:8px">还没有图片</div>
+      <button class="inline-btn" id="np-file" style="margin-top:11px">从相册选 / 拍照</button>
+      <input type="file" id="np-input" accept="image/*" style="display:none">
+      <div class="lbl">图案名称</div>
+      <input type="text" id="np-name" placeholder="如 小蘑菇 / 生日蛋糕"
+             style="width:100%;border:1.5px solid var(--line);border-radius:10px;
+                    padding:11px 13px;font-size:14px;outline:none">
+      <div class="lbl">豆子直径</div>
+      <div class="diachips">${(ds.length ? ds : [dd]).map(d =>
+        `<button class="diachip${d === npDia ? ' on' : ''}" data-d="${d}">${d}mm</button>`).join('')}</div>
+      <div style="font-size:11px;color:var(--faint);margin-top:10px;line-height:1.7">
+        图只是给自己看的参考，不影响库存计算。不加图也能建。<br>
+        直径决定查库存时算哪一批——不同直径的同色号不能混着拼。
+      </div>
+    </div>
+    <div class="acts">
+      <button class="btn" id="np-cancel">取消</button>
+      <button class="btn pri" id="np-ok">创建</button>
+    </div>
+  `);
+
+  document.querySelectorAll('#sheet .diachip').forEach(b => {
+    b.onclick = () => {
+      npDia = Number(b.dataset.d);
+      document.querySelectorAll('#sheet .diachip').forEach(x =>
+        x.classList.toggle('on', Number(x.dataset.d) === npDia));
+    };
+  });
+
+  $('np-file').onclick = () => $('np-input').click();
+  $('np-input').onchange = e => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    shrinkImage(f, dataUrl => {
+      npImg = dataUrl;
+      $('np-prev').innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:contain">`;
+    });
+  };
+  $('np-cancel').onclick = closeSheet;
+  $('np-ok').onclick = () => {
+    const name = ($('np-name').value || '').trim() || '未命名图案';
+    const p = { id:'p' + (S.pseq++), name, img:npImg, dia:npDia, items:{}, at:Date.now() };
+    S.patterns.unshift(p);
+    logIt(null, null, 'PAT_NEW', `新建图案「${name}」`);
+    save(); closeSheet();
+    renderPatterns();
+    setTimeout(() => openPattern(p.id), 200);
+  };
+}
+
+/** 图片压到长边 360，存本地才不至于撑爆容量 */
+function shrinkImage(file, cb){
+  const fr = new FileReader();
+  fr.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const max = 360, r = Math.min(1, max / Math.max(img.width, img.height));
+      const cv = document.createElement('canvas');
+      cv.width = Math.max(1, Math.round(img.width * r));
+      cv.height = Math.max(1, Math.round(img.height * r));
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      cb(cv.toDataURL('image/jpeg', 0.72));
+    };
+    img.src = e.target.result;
+  };
+  fr.readAsDataURL(file);
+}
+
+$('btn-new-pat').onclick = newPattern;
+$('patd-back').onclick = () => {
+  lastBatch = null;          // 离开详情页＝放弃撤销权
+  $('p-patd').classList.remove('on');
+};
+$('patd-more').onclick = () => {
+  const p = patOf(curPat);
+  if (!p) return;
+  if (!confirm(`删除图案「${p.name}」？库存不受影响。`)) return;
+  S.patterns = S.patterns.filter(x => x.id !== p.id);
+  logIt(null, null, 'PAT_DEL', `删除图案「${p.name}」`);
+  save();
+  $('p-patd').classList.remove('on');
+  renderPatterns();
+};
+
+/* ===================== ② 库存页 ===================== */
 const SORT_ICO = {
   code:   '<path d="M4 5.6h12M4 10h8.4M4 14.4h5.2"/>',
   recent: '<circle cx="10" cy="10" r="6.3"/><path d="M10 6.1V10l2.7 1.7"/>'
@@ -623,26 +2726,36 @@ function renderSort(){
     : '定位色号';
 }
 
+/** 有库存但低于预警值 */
+function isLow(a){ return S.warn > 0 && a.lines > 0 && a.count < S.warn; }
+function lowCount(){ let n = 0; COLORS.forEach(c => { if (isLow(agg(c.code))) n++; }); return n; }
+
 function renderStock(){
-  $('s-sub').textContent = `${stockedColors()} 个色号 · ${intFmt(totalCount())} 颗`;
+  const low = lowCount();
+  // 预警被关掉或已经没东西偏少时，"偏少"这一格会消失，筛选得跟着回到全部
+  if (filter === 'low' && !(S.warn > 0 && low > 0)) filter = 'all';
+  $('s-sub').innerHTML = `${stockedColors()} 个色号 · ${intFmt(totalCount())} 颗`
+    + (low ? ` · <span style="color:#d93025">${low} 个偏少</span>` : '');
   renderSort();
   renderFambar();
   renderGrid();
 }
 
 function renderFambar(){
-  const has = stockedColors();
+  const has = stockedColors(), low = lowCount();
   const items = [{ k:'all', label:'全部', n:COLORS.length, h:has },
                  { k:'stock', label:'有货', n:has, h:has }];
+  // 只有开着预警、且确实有色号偏少时才挂这一格
+  if (S.warn > 0 && low > 0) items.push({ k:'low', label:'偏少', n:low, h:low });
   FAMILIES.forEach(f => {
     const inFam = COLORS.filter(c => c.family === f);
     items.push({ k:f, label:f, n:inFam.length,
-                 h:inFam.filter(c => agg(c.code).weight > 0).length });
+                 h:inFam.filter(c => agg(c.code).count > 0).length });
   });
   $('fambar').innerHTML = items.map(it => {
     const cnt = (it.k === 'all' || it.k === 'stock') ? it.n : (it.h > 0 ? it.h : it.n);
-    return `<button class="chip${filter === it.k ? ' on' : ''}${it.h > 0 ? ' has' : ''}" data-f="${it.k}">
-              ${it.label}<em>${cnt}</em></button>`;
+    return `<button class="chip${filter === it.k ? ' on' : ''}${it.h > 0 ? ' has' : ''}"
+              data-f="${it.k}">${it.label}<em>${cnt}</em></button>`;
   }).join('');
   $('fambar').querySelectorAll('.chip').forEach(b => {
     b.onclick = () => { filter = b.dataset.f; renderFambar(); renderGrid(); };
@@ -651,7 +2764,8 @@ function renderFambar(){
 
 function visibleColors(){
   let list = COLORS;
-  if (filter === 'stock') list = list.filter(c => agg(c.code).brands > 0);
+  if (filter === 'stock') list = list.filter(c => agg(c.code).count > 0);
+  else if (filter === 'low') list = list.filter(c => isLow(agg(c.code)));
   else if (filter !== 'all') list = list.filter(c => c.family === filter);
 
   const ord = {}; FAMILIES.forEach((f,i) => ord[f] = i);
@@ -670,22 +2784,22 @@ function renderGrid(){
     g.innerHTML = `<div class="empty" style="grid-column:1/-1">${
       filter === 'stock'
         ? '还没有任何库存<br><span style="font-size:12px;color:var(--faint)">切到「全部」点任意色号开始入库</span>'
+        : filter === 'low'
+        ? `没有色号低于 ${intFmt(S.warn)} 颗<br><span style="font-size:12px;color:var(--faint)">预警值可以在设置里改</span>`
         : '没有匹配的色号'}</div>`;
     return;
   }
   g.innerHTML = list.map(c => {
-    const a = agg(c.code), hx = hexOf(c.code);
+    const a = agg(c.code), hx = hexOf(c.code), low = isLow(a);
     let qty = '';
-    if (a.brands > 0){
-      const txt = a.count > 0
-        ? (a.uncounted > 0 ? '≈' : '') + intFmt(a.count)
-        : '—';
-      qty = `<span class="qty${a.hasEst ? ' est' : ''}">${txt}</span>`;
+    if (a.lines > 0){
+      qty = `<span class="qty">${intFmt(a.count)}</span>`;
     }
-    return `<button class="bead${a.brands > 0 ? ' hasq' : ''}" data-code="${c.code}"
+    return `<button class="bead${a.count > 0 ? ' hasq' : ''}" data-code="${c.code}"
               style="background:${hx};${textStyle(hx)}">
+              ${low ? '<i class="low">!</i>' : ''}
               <span class="code">${c.code}</span>${qty}
-              ${a.brands > 1 ? '<i class="multi"></i>' : ''}
+              ${a.lines > 1 ? '<i class="multi"></i>' : ''}
             </button>`;
   }).join('');
   g.querySelectorAll('.bead').forEach(b => {
@@ -698,64 +2812,58 @@ function openColor(){
   const hx = hexOf(curCode), a = agg(curCode);
   $('color-title').textContent = curCode;
 
-  const rows = S.types.map(t => {
-    const it = skuOf(t.id, curCode), s = statOf(t, it);
-    const thx = hexFor(t.id, curCode);          // 这个牌子下的实际颜色
-    const tag = !s.has ? ''
-      : (it.state === 'e' || s.est
-          ? '<span class="tag e">估算</span>' : '<span class="tag m">实测</span>');
+  const rows = S.dias.map(d => {
+    const s = statRow(curCode, d);
+    const netTxt = s.net !== null ? `≈${fmt(s.net)} g` : '';
 
     let sub;
     if (!s.has) sub = '未入库 · 点此录入';
-    else if (s.est) sub = `≈${fmt(s.net)} g（按 ${intFmt(s.cnt)} 颗推算）`;
-    else if (s.net !== null)
-      sub = `${fmt(s.net)} g · ${it.state === 'm' ? '称于' : '记于'} ${dayStr(it.sat || it.at)}`;
-    else sub = '只有颗数，没称过重';
+    else if (!(s.qty > 0)) sub = '用完了' + (netTxt ? `（${netTxt}）` : '');
+    else if (s.gpb) sub = `${netTxt} · 记于 ${dayStr(s.at)}`;
+    else sub = '只有颗数，没记颗重';
 
-    return `<div class="item" data-tid="${t.id}">
-      <div class="sw" style="background:${thx};${textStyle(thx)}">${curCode.replace(/[A-Z]/g,'')}</div>
+    return `<div class="item" data-dia="${d}">
+      <div class="sw" style="background:${hx};${textStyle(hx)}">${curCode.replace(/[A-Z]/g,'')}</div>
       <div class="mid">
-        <b>${typeLabel(t)} ${tag}</b>
+        <b>${String(d).replace(/\.0$/,'')}mm</b>
         <small>${sub}</small>
       </div>
       <div class="right">
-        ${s.cnt === null ? '<b style="color:#c9ced6">—</b>' : `<b>${intFmt(s.cnt)}</b><small>颗</small>`}
+        ${!s.has ? '<b style="color:#c9ced6">—</b>'
+                 : `<b${s.qty === 0 ? ' style="color:#b6bec8"' : ''}>${intFmt(s.qty)}<i>颗</i></b>`}
       </div>
       <span class="arrow">›</span>
     </div>`;
   }).join('');
 
   const logs = S.logs.filter(l => l.code === curCode).slice(0, 5);
-  const wTxt = a.weight > 0
-    ? (a.noW > 0 ? '≥' : (a.hasEst ? '≈' : '')) + fmt(a.weight) + ' g'
-    : '—';
+  const wTxt = a.weight > 0 ? `≈${fmt(a.weight)} g` : '—';
 
   $('color-body').innerHTML = `
     <div class="hero">
       <div class="big" style="background:${hx};${textStyle(hx)}">${curCode}</div>
       <div class="mid">
-        <div class="n">${a.uncounted > 0 ? '≈' : ''}${intFmt(a.count)}<span>颗</span></div>
-        <div class="g">${wTxt} · ${a.brands} 个品牌</div>
+        <div class="n">${intFmt(a.count)}<span>颗</span></div>
+        <div class="g">${wTxt} · ${a.lines > 1 ? a.lines + ' 种直径' : (S.dias[0] ? String(S.dias[0]).replace(/\.0$/,'') + 'mm' : '—')}</div>
       </div>
     </div>
 
-    <div class="sect-t">各品牌库存<span class="sp">点一行更新</span></div>
+    <div class="sect-t">按直径<span class="sp">点一行更新</span></div>
     <div class="grp">${rows}</div>
-    ${a.noW > 0 ? `<div style="font-size:11.5px;color:var(--muted);padding:8px 2px 0;line-height:1.6">
-      有 ${a.noW} 个型号只记了颗数，重量合计里没算它。</div>` : ''}
-    ${a.uncounted > 0 ? `<div style="font-size:11.5px;color:var(--warn);padding:6px 2px 0;line-height:1.6">
-      有 ${a.uncounted} 个型号有重量但没标定颗重，颗数合计只算了能换算的部分。</div>` : ''}
+    <div style="font-size:11.5px;color:var(--muted);padding:8px 2px 0;line-height:1.6">
+      库存按「色号 + 直径」记，不管豆子是哪家买的。克数是按颗重算出来的，仅供参考。
+    </div>
 
     ${logs.length ? `<div class="sect-t">最近记录</div>
     <div class="grp">${logs.map(l => {
-      const t = typeOf(l.tid);
+      const src = sourceOf(l.sid);
       return `<div class="log"><div class="t">${dayStr(l.ts)}</div>
-        <div class="c"><em>${t ? t.brand : '—'}</em> ${l.note}</div></div>`;
+        <div class="c">${src ? `<em>${src.name}</em> ` : ''}${l.note}</div></div>`;
     }).join('')}</div>` : ''}
   `;
 
   $('color-body').querySelectorAll('.item').forEach(el => {
-    el.onclick = () => openUpdate(el.dataset.tid, curCode);
+    el.onclick = () => openUpdate(curCode, Number(el.dataset.dia));
   });
 
   $('p-color').classList.add('on');
@@ -775,24 +2883,27 @@ function numPad(opts){
   const layer = document.createElement('div');
   layer.className = 'padlayer on';
   layer.innerHTML = `
-    <div class="padhd">
-      <div class="t">${opts.title || ''}</div>
-      <div class="v ph" id="pd-v"><span id="pd-t">0</span><em>${opts.unit || ''}</em></div>
-    </div>
-    <div class="padspacer"></div>
-    <div class="pad">
-      ${['1','2','3','4','5','6','7','8','9','.','0','bksp'].map(k =>
-        k === 'bksp'
-          ? `<button type="button" class="fn" data-k="bksp">⌫</button>`
-          : `<button type="button" data-k="${k}">${k}</button>`
-      ).join('')}
-    </div>
-    <div class="acts" style="padding:12px 0 0">
-      <button class="btn" id="pd-c">取消</button>
-      <button class="btn pri" id="pd-ok">确定</button>
+    <div class="padcard">
+      <div class="padhd">
+        <div class="t">${opts.title || ''}</div>
+        <div class="v ph" id="pd-v"><span id="pd-t">0</span><em>${opts.unit || ''}</em></div>
+      </div>
+      <div class="pad">
+        ${['1','2','3','4','5','6','7','8','9','.','0','bksp'].map(k =>
+          k === 'bksp'
+            ? `<button type="button" class="fn" data-k="bksp">⌫</button>`
+            : `<button type="button" data-k="${k}">${k}</button>`
+        ).join('')}
+      </div>
+      <div class="acts" style="padding:12px 0 0">
+        <button class="btn" id="pd-c">取消</button>
+        <button class="btn pri" id="pd-ok">确定</button>
+      </div>
     </div>
   `;
-  $('sheet').appendChild(layer);
+  // 必须挂到 .phone 上：挂到 #sheet 里的话，sheet 收起时（translateY 101%）
+  // 键盘会跟着一起跑到屏幕外，看起来就是"点了没反应"
+  document.querySelector('.phone').appendChild(layer);
 
   const vEl = layer.querySelector('#pd-v'), tEl = layer.querySelector('#pd-t');
   const dotBtn = layer.querySelector('[data-k="."]');
@@ -829,6 +2940,7 @@ function numPad(opts){
   show();
 
   const close = () => layer.remove();
+  layer.onclick = ev => { if (ev.target === layer) close(); };   // 点遮罩＝放弃
   layer.querySelector('#pd-c').onclick = close;
   layer.querySelector('#pd-ok').onclick = () => {
     if (str === '' || str === '.'){ vEl.style.borderBottomColor = '#dc2626'; return; }
@@ -844,29 +2956,36 @@ let up = { tid:null, code:null, op:'sub', unit:'pcs', v:null };
 /** 因"要先标定"而中断的更新上下文，标定完自动回到这里 */
 let pendingBack = null;
 
-function openUpdate(tid, code, opt){
-  const t = typeOf(tid), it = skuOf(tid, code), s = statOf(t, it);
-  const canW = t.gpb > 0;
-  const wantUnit = opt && opt.unit === 'g' && canW ? 'g' : 'pcs';
+function openUpdate(code, dia, opt){
+  const o = opt || {};
+  const s = statRow(code, dia);
+  const canW = s.gpb > 0;
+  const d0 = S.sources.length ? S.sources[0].id : null;
+  // 没颗重却要求按克 → 退回按颗；其余原样恢复（从标定页回来时会带着这些）
+  const wantUnit = (o.unit === 'g' && canW) ? 'g' : 'pcs';
 
-  up = { tid, code, op: s.has ? 'sub' : 'set', unit: wantUnit, v:null };
+  up = {
+    code, dia,
+    op: o.op || 'add',
+    unit: wantUnit,
+    v: (o.v === undefined ? null : o.v),
+    sid: (o.sid === undefined ? d0 : o.sid),
+    justCal: !!o.justCal
+  };
 
   const nowTxt = !s.has ? '还没有记录'
-    : `当前 <b>${intFmt(s.cnt || 0)}</b> 颗` +
-      (s.net !== null ? `${s.est ? ' · ≈' : ' · '}${fmt(s.net)} g` : ' · 未称重');
+    : `当前 <b>${intFmt(s.qty)}</b> 颗` + (s.net !== null ? ` · ≈${fmt(s.net)} g` : '');
 
   sheet(`
     <div class="sh">
-      <h3>${typeLabel(t)} · ${code}</h3>
-      <p>${nowTxt}${canW
-        ? ` · 颗重 ${t.gpb.toFixed(4)} g`
-        : ' · <span style="color:var(--warn)">未标定颗重</span>'}</p>
+      <h3>${code} · ${String(dia).replace(/\.0$/,'')}mm</h3>
+      <p>${nowTxt}</p>
     </div>
     <div class="sb">
       <div class="lbl">操作</div>
       <div class="seg" id="seg-op">
+        <button data-op="add"${up.op === 'add' ? ' class="on"' : ''}>入库</button>
         <button data-op="sub"${up.op === 'sub' ? ' class="on"' : ''}>扣减</button>
-        <button data-op="add"${up.op === 'add' ? ' class="on"' : ''}>增加</button>
         <button data-op="set"${up.op === 'set' ? ' class="on"' : ''}>设为</button>
       </div>
 
@@ -876,10 +2995,25 @@ function openUpdate(tid, code, opt){
         <button data-unit="g"${up.unit === 'g' ? ' class="on"' : ''}>克${canW ? '' : ' 🔒'}</button>
       </div>
 
+      <div id="up-srcwrap">
+        <div class="lbl">这批是哪儿买的<span style="color:var(--faint)"> · 只记在流水里，不影响库存</span></div>
+        <div class="diachips" id="up-src" style="flex-wrap:wrap">
+          ${S.sources.map(x => `<button type="button" class="diachip${x.id === up.sid ? ' on' : ''}"
+              data-s="${x.id}">${x.name}</button>`).join('')}
+          <button type="button" class="diachip${up.sid ? '' : ' on'}" data-s="">不记</button>
+        </div>
+      </div>
+
       <div class="lbl">数量</div>
       <div class="numfield" id="up-field">
         <span class="v ph" id="up-disp">点此输入</span>
         <span class="u" id="up-u">颗</span>
+      </div>
+
+      <!-- 颗重始终可改：这袋跟上次不一样就重新称一遍，整行只留最新这一份 -->
+      <div class="calrow">
+        <span id="up-caltxt"></span>
+        <button type="button" class="lnk" id="up-cal"></button>
       </div>
 
       <div class="prev" id="up-prev">点上面的输入框，用自带键盘填数量</div>
@@ -896,6 +3030,9 @@ function openUpdate(tid, code, opt){
       b.classList.toggle('on', b.dataset.op === up.op));
     document.querySelectorAll('#seg-unit button').forEach(b =>
       b.classList.toggle('on', b.dataset.unit === up.unit));
+    document.querySelectorAll('#up-src .diachip').forEach(b =>
+      b.classList.toggle('on', (b.dataset.s || '') === (up.sid || '')));
+    $('up-srcwrap').style.display = up.op === 'add' ? '' : 'none';
 
     const disp = $('up-disp');
     if (up.v === null){
@@ -905,28 +3042,51 @@ function openUpdate(tid, code, opt){
       disp.classList.remove('ph');
     }
 
-    const p = calcUpdate(t, s);
+    const sr = statRow(code, dia);
+    $('up-caltxt').innerHTML = sr.gpb
+      ? `颗重 <b>${sr.gpb.toFixed(4)}</b> g/颗` +
+        (up.justCal ? ' <span class="just">· 刚更新</span>'
+                    : (sr.cal ? `<span style="color:var(--faint)"> · 上次 ${sr.cal.n} 颗 ${fmt(sr.cal.m)} g</span>` : ''))
+      : '还没记颗重，按克记要先测一次';
+    $('up-cal').textContent = sr.gpb ? '重新标定 ›' : '去测一次 ›';
+
+    const r = calcUpdate(code, dia);
     const box = $('up-prev');
-    if (!p){ box.innerHTML = '点上面的输入框，用自带键盘填数量'; return; }
+    if (!r){ box.innerHTML = '点上面的输入框，用自带键盘填数量'; return; }
 
-    const measure = (up.op === 'set' && up.unit === 'g');
-    let html = up.unit === 'g'
-      ? `<b>${fmt(s.net || 0)} g</b> → <b>${fmt(p.net)} g</b>`
-      : `<b>${intFmt(s.cnt || 0)}</b> → <b>${intFmt(p.cnt)}</b> 颗`;
+    // 第一句永远是「这次变了多少颗」——用户最想知道的是这个，不是前后总量
+    const before = statRow(code, dia);
+    const dQty = r.qty - (before.qty || 0);
+    const dNet = (r.net || 0) - (before.net || 0);
+    const gVal = up.unit !== 'g' ? null
+               : (up.op === 'set' ? up.v : Math.abs(dNet));
+    const mv = moveText(up.op, up.unit, dQty, gVal, r.qty, before.qty || 0, r.gpb);
 
-    if (canW) html += up.unit === 'g'
-      ? `　约 <b>${intFmt(p.cnt)}</b> 颗`
-      : `　约 <b>${fmt(p.net)}</b> g`;
-    html += `<br>${measure
-      ? '记为 <b>实测</b>（称过就是真值）'
-      : (canW ? '<span class="w">记为估算</span>（按颗重推算，误差会累积）'
-              : '只记颗数，不计重量')}`;
-    if (p.over) html += '<br><span class="w">超出当前库存，将按 0 处理</span>';
+    let html = '';
+    if (up.unit === 'g'){
+      html = up.op === 'set'
+        ? `称 <b>${fmt(gVal || 0)} g</b> ≈ <b>${intFmt(r.qty)}</b> 颗`
+        : `本次 <b>${mv.sign}${fmt(gVal || 0)} g</b> ≈ <b>${mv.sign}${intFmt(mv.absQ)}</b> 颗`;
+    } else {
+      html = up.op === 'set'
+        ? `设为 <b>${intFmt(r.qty)}</b> 颗`
+        : `本次 <b>${mv.sign}${intFmt(mv.absQ)}</b> 颗`;
+    }
+
+    // 第二句：前后对照，颗数在前（真值），克数在后（参考）
+    html += `<br><b>${intFmt(before.qty || 0)}</b> → <b>${intFmt(r.qty)}</b> 颗`
+          + (r.gpb ? `　≈${fmt(before.net || 0)} → ≈<b>${fmt(r.net)}</b> g` : '');
+
+    if (up.op === 'add' && up.sid){
+      const src = sourceOf(up.sid);
+      html += `<br>记到 <b>${src ? src.name : '—'}</b> 名下，流水里能查到`;
+    }
+    if (r.over) html += '<br><span class="w">超出当前库存，将按 0 处理</span>';
     box.innerHTML = html;
   }
 
   $('up-field').onclick = () => numPad({
-    title: `${typeLabel(t)} · ${code}　${up.unit === 'pcs' ? '按颗' : '按重量'}`,
+    title: `${code} · ${String(dia).replace(/\.0$/,'')}mm　${up.unit === 'pcs' ? '按颗' : '按重量'}`,
     unit: up.unit === 'pcs' ? '颗' : 'g',
     decimal: up.unit === 'g',
     value: up.v,
@@ -939,44 +3099,56 @@ function openUpdate(tid, code, opt){
   document.querySelectorAll('#seg-unit button').forEach(b => {
     b.onclick = () => {
       if (b.dataset.unit === 'g' && !canW){
-        pendingBack = { tid, code };
-        needCalibrate(t);
+        pendingBack = { code, dia, op:up.op, v:up.v, sid:up.sid, unit:'g', justCal:true };
+        needCalibrate(code, dia);
         return;
       }
       up.unit = b.dataset.unit; paint();
     };
   });
+  document.querySelectorAll('#up-src .diachip').forEach(b => {
+    b.onclick = () => { up.sid = b.dataset.s || null; paint(); };
+  });
 
+  // 重新标定：把当前录入状态一起带走，标完原样回来（已填的数量不丢）
+  $('up-cal').onclick = () => openCalibrate({ code, dia }, {
+    code, dia, op:up.op, v:up.v, sid:up.sid,
+    unit: canW ? up.unit : 'g',      // 本来没有颗重，测完就是要按克记
+    justCal: true
+  });
+
+  delete up.over;
   $('up-cancel').onclick = () => { pendingBack = null; closeSheet(); };
   $('up-ok').onclick = () => {
-    const p = calcUpdate(t, s);
-    if (!p){
+    const r = calcUpdate(code, dia);
+    if (!r){
       const f = $('up-field');
       f.style.borderColor = '#dc2626';
       setTimeout(() => { f.style.borderColor = ''; }, 900);
       return;
     }
-    commitUpdate(t, code, p);
+    commitUpdate(code, dia, r);
     closeSheet();
   };
   paint();
 }
 
-/** 未标定时想按克记账 → 引导去标定，标完回到原来的更新抽屉 */
-function needCalibrate(t){
+/** 没颗重却想按克记 → 引导去标定，标完回到原来的录入抽屉 */
+function needCalibrate(code, dia){
+  const dTxt = String(dia).replace(/\.0$/,'');
   sheet(`
     <div class="sh">
-      <h3>按重量记账要先标定</h3>
-      <p>有颗重才能把克数换成颗数。标一次，${typeLabel(t)} 下所有色号通用。</p>
+      <h3>按重量记要先知道颗重</h3>
+      <p>有颗重才能把克数换成颗数。测一次，${dTxt}mm 这一堆就有了。</p>
     </div>
     <div class="sb">
       <div class="prev" style="margin-top:0">
-        数出 <b>${suggestSampleN(t.dia)} 颗</b>豆子称一次净重即可，
-        或者包装上标了颗数就直接整包称重——后者更准，还不用数。
+        数出 <b>${suggestSampleN(dia)} 颗</b>豆子称净重即可。包装上标了颗数的话，
+        整包称重更准，还不用数。
       </div>
       <div class="lbl">现在要做什么</div>
       <div class="prev" style="margin-top:0;background:#fff">
-        标定后自动回到这个色号的录入界面，单位已经是「克」。
+        标定后自动回到 ${code} 的录入界面，单位已经是「克」。
       </div>
     </div>
     <div class="acts">
@@ -984,77 +3156,88 @@ function needCalibrate(t){
       <button class="btn pri" id="nc-go">去标定</button>
     </div>
   `);
-  $('nc-later').onclick = () => { pendingBack = null; closeSheet(); };
+  $('nc-later').onclick = () => {
+    pendingBack = null; up.unit = 'pcs'; closeSheet();
+    setTimeout(() => openUpdate(up.code, up.dia), 120);
+  };
   $('nc-go').onclick = () => {
     const back = pendingBack;
     closeSheet();
-    setTimeout(() => openCalibrate(t, back), 200);
+    setTimeout(() => openCalibrate({ code, dia }, back), 200);
   };
 }
 
-function calcUpdate(t, s){
+/**
+ * 预览这次改完会变成多少。qty 永远是最终颗数。
+ * 颗重（gpb）只由「重新标定」改——录克数时不再顺手反推，
+ * 否则四舍五入的零头会一次次把标定值磨歪。
+ */
+function calcUpdate(code, dia){
   const v = up.v;
   if (v === null) return null;
-  const gpb = t.gpb > 0 ? t.gpb : 0;
-  let cnt, net, over = false;
+  const s = statRow(code, dia);
+  const gpb = s.gpb > 0 ? s.gpb : null;
+  let qty, net, over = false;
 
   if (up.unit === 'g'){
+    if (!gpb) return null;
     const base = s.net || 0;
     const after = up.op === 'set' ? v : (up.op === 'sub' ? base - v : base + v);
     over = after < 0;
     net = Math.max(0, after);
-    cnt = gpb ? Math.round(net / gpb) : 0;
+    qty = Math.round(net / gpb);
   } else {
-    const base = s.cnt || 0;
+    const base = s.qty || 0;
     const after = up.op === 'set' ? v : (up.op === 'sub' ? base - v : base + v);
     over = after < 0;
-    cnt = Math.max(0, Math.round(after));
-    net = gpb ? cnt * gpb : 0;
+    qty = Math.max(0, Math.round(after));
+    net = gpb ? qty * gpb : 0;
   }
-  return { cnt, net, v, over };
+  return { qty, net, gpb, over, delta: qty - (s.qty || 0) };
 }
 
-function commitUpdate(t, code, p){
-  const key = t.id + '|' + code;
-  const it = skuOf(t.id, code) || { state:'e', at:null, sat:null };
-  const measure = (up.op === 'set' && up.unit === 'g');
-  const now = Date.now();
+/**
+ * 一次变动的统一说法，预览和日志共用——保证「看到什么就记什么」。
+ * 顺序固定：① 变了多少颗（set 说「设为」）② 怎么算出来的 ③ 现在一共多少颗
+ *   +658 颗 · 称 12.50 g ÷ 0.0190 g/颗 → 共 4,247 颗
+ *   −12 颗 · 按颗 → 共 3,577 颗
+ *   设为 3,947 颗 · 称 75.00 g ÷ 0.0190 g/颗（原 3,589 颗）
+ * gVal：克数——add/sub 传实际增减的克（正数），set 传称出来的总量
+ */
+function moveText(op, unit, dQty, gVal, afterQty, beforeQty, gpb){
+  const sign = dQty < 0 ? '−' : '+';
+  const absQ = Math.abs(dQty);
+  const core = op === 'set' ? `设为 ${intFmt(afterQty)} 颗` : `${sign}${intFmt(absQ)} 颗`;
+  const how = unit === 'g'
+    ? `称 ${fmt(gVal || 0)} g ÷ ${gpb ? gpb.toFixed(4) : '—'} g/颗`
+    : '按颗';
+  const tail = op === 'set' ? `原 ${intFmt(beforeQty)} 颗` : `共 ${intFmt(afterQty)} 颗`;
+  return {
+    sign, absQ, core, how, tail,
+    full: op === 'set' ? `${core} · ${how}（${tail}）` : `${core} · ${how} → ${tail}`
+  };
+}
 
-  if (up.unit === 'g'){
-    it.net = Math.round(p.net * 1000) / 1000;
-    it.src = 'w';
-    delete it.cnt;
+function commitUpdate(code, dia, r){
+  const before = statRow(code, dia);
+  const dQty = r.qty - (before.qty || 0);
+  const dNet = (r.net || 0) - (before.net || 0);
+  const gVal = up.unit !== 'g' ? null
+             : (up.op === 'set' ? up.v : Math.abs(dNet));
+  const mv = moveText(up.op, up.unit, dQty, gVal, r.qty, before.qty || 0, r.gpb);
+  const cameFrom = (up.op === 'add' && up.sid) ? sourceOf(up.sid) : null;
+
+  if (cameFrom && dQty > 0){
+    // 入库：记流水，库存只加颗数；颗重用行里标定好的那份
+    stockIn(code, dia, dQty, up.unit === 'g' ? Math.max(0, dNet) : null, up.sid, r.gpb);
+    logIt(up.sid, code, 'IN', mv.full);
   } else {
-    it.cnt = p.cnt;
-    it.src = 'c';
-    if (t.gpb > 0) it.net = Math.round(p.cnt * t.gpb * 1000) / 1000;
-    else delete it.net;
+    writeRow(code, dia, r.qty, r.gpb);
+    logIt(null, code, up.op === 'set' ? 'SET' : (up.op === 'sub' ? 'SUB' : 'ADD'), mv.full);
   }
-  it.state = measure ? 'm' : 'e';
-  it.at = now;                                  // 最近操作时间，排序用
-  if (measure) it.sat = now;                    // 最近一次真正称重
-  S.stock[key] = it;
-
-  const s2 = statOf(t, it);
-  const parts = [];
-  if (up.op === 'set'){
-    parts.push(up.unit === 'g'
-      ? `设为 ${fmt(it.net)} g（称重）`
-      : `盘点设为 ${intFmt(p.cnt)} 颗`);
-  } else {
-    parts.push(up.unit === 'g'
-      ? `${up.op === 'sub' ? '扣减' : '增加'} ${fmt(p.v, 2)} g → ${fmt(it.net)} g`
-      : `${up.op === 'sub' ? '扣减' : '增加'} ${intFmt(p.v)} 颗 → ${intFmt(p.cnt)} 颗`);
-  }
-  if (t.gpb > 0 && up.unit !== 'g') parts.push(`约 ${fmt(it.net)} g`);
-  else if (s2.cnt) parts.push(`约 ${intFmt(s2.cnt)} 颗`);
-  else parts.push('未标定颗重，不计颗数');
-
-  logIt(t.id, code, up.op === 'set' ? 'SET' : (up.op === 'sub' ? 'SUB' : 'ADD'),
-        parts.join('，'));
 
   save();
-  curCode = code;                 // 保证详情页停在这一页，不管是从哪儿打开抽屉的
+  curCode = code;
   openColor(); renderStock();
   if (tab === 'brand') renderBrands();
   pickedCode = code;
@@ -1062,135 +3245,132 @@ function commitUpdate(t, code, p){
 }
 
 /* ===================== ② 品牌页 ===================== */
+/* ===================== ③ 来源页（品牌 / 店铺 / 散装） ===================== */
+/**
+ * 来源只在录入时有用：记这批从哪买、什么规格、什么色。
+ * 它不是库存的维度——库存只看「色号 + 直径」，同色同直径的豆子当一堆算。
+ */
+function sourceStat(sid){
+  const rows = S.inLog.filter(x => x.sid === sid);
+  let qty = 0; const codes = {};
+  rows.forEach(x => { qty += x.qty || 0; codes[x.code] = 1; });
+  return { qty, colors: Object.keys(codes).length, last: rows.length ? rows[0].ts : null, times: rows.length };
+}
+
 function renderBrands(){
-  $('b-sub').textContent = `${S.types.length} 个型号`;
+  $('b-sub').textContent = S.sources.length ? `${S.sources.length} 个来源` : '';
   const box = $('brand-body');
-  if (!S.types.length){
-    box.innerHTML = `<div class="empty">还没有品牌型号<br>
-      <span style="font-size:12px;color:var(--faint)">点右上角「新增」，标定颗重后即可按颗计数</span></div>`;
+  if (!S.sources.length){
+    box.innerHTML = `<div class="empty">还没有记过来源<br>
+      <span style="font-size:12px;color:var(--faint)">这不是必填项。想记「哪家买的」时再加，不记也能用</span></div>`;
     return;
   }
-  box.innerHTML = `<div class="grp">` + S.types.map(t => {
-    let cnt = 0, weight = 0, colors = 0;
-    COLORS.forEach(c => {
-      const s = statOf(t, skuOf(t.id, c.code));
-      if (!s.has) return;
-      colors++;
-      if (s.net !== null) weight += s.net;
-      if (s.cnt !== null) cnt += s.cnt;
-    });
-    const tag = t.gpb > 0 ? '<span class="tag m">已标定</span>' : '<span class="tag e">未标定</span>';
-    return `<div class="item" data-tid="${t.id}">
-      <div class="ico" style="background:#eceef1;color:var(--muted);font-size:11px">${t.brand.slice(0,2)}</div>
+  box.innerHTML = `<div class="grp">` + S.sources.map(src => {
+    const st = sourceStat(src.id);
+    return `<div class="item" data-sid="${src.id}">
+      <div class="ico" style="background:#eceef1;color:var(--muted);font-size:11px">${src.name.slice(0,2)}</div>
       <div class="mid">
-        <b>${typeLabel(t)} ${tag}</b>
-        <small>${colors} 个色号 · ${weight > 0 ? fmt(weight,1) + ' g' : '无重量'}${cnt > 0 ? ' · ' + intFmt(cnt) + ' 颗' : ''}</small>
-        <small style="color:var(--faint)">${t.gpb > 0 ? t.gpb.toFixed(4) + ' g/颗 · ' + (t.cat ? '标于 ' + dayStr(t.cat) : '') : '只能按颗记录，不能按重量'}</small>
+        <b>${src.name} <span class="tag n">${KIND_CN[src.kind] || '其他'}</span></b>
+        <small>${st.colors ? `入过 ${st.colors} 个色号 · 累计 ${intFmt(st.qty)} 颗` : '还没入过库'}</small>
+        <small style="color:var(--faint)">${st.last ? '最近 ' + dayStr(st.last) : '—'}</small>
       </div>
       <span class="arrow">›</span>
     </div>`;
-  }).join('') + `</div>`;
+  }).join('') + `</div>
+  <div style="font-size:11.5px;color:var(--faint);padding:10px 4px 24px;line-height:1.7">
+    来源只是记账用的标签。扣库存、判够不够拼都不看它——同一色号同一尺寸，谁的都一样用。
+  </div>`;
   box.querySelectorAll('.item').forEach(el => {
-    el.onclick = () => { curType = el.dataset.tid; openType(); };
+    el.onclick = () => { curSource = el.dataset.sid; openType(); };
   });
 }
 
-/* ===================== 品牌详情页 ===================== */
-function openType(){
-  const t = typeOf(curType);
-  $('type-title').textContent = typeLabel(t);
+const KIND_CN = { brand:'品牌', shop:'店铺', loose:'散装' };
 
-  let cnt = 0, weight = 0, colors = 0;
-  const stocked = [];
-  COLORS.forEach(c => {
-    const s = statOf(t, skuOf(t.id, c.code));
-    if (!s.has) return;
-    colors++; stocked.push(c.code);
-    if (s.net !== null) weight += s.net;
-    if (s.cnt !== null) cnt += s.cnt;
+/* ===================== 来源详情 ===================== */
+function openType(){
+  const src = sourceOf(curSource);
+  if (!src) return;
+  $('type-title').textContent = src.name;
+
+  // 这个来源入过哪些色号（只从流水统计，不碰库存）
+  const byCode = {};
+  S.inLog.filter(x => x.sid === src.id).forEach(x => {
+    const o = byCode[x.code] || (byCode[x.code] = { code:x.code, qty:0, last:0, dia:new Set() });
+    o.qty += x.qty || 0;
+    o.last = Math.max(o.last, x.ts || 0);
+    o.dia.add(Number(x.dia));
   });
+  const list = Object.keys(byCode).map(k => byCode[k]).sort((a, b) => b.qty - a.qty);
+  const st = sourceStat(src.id);
 
   $('type-body').innerHTML = `
-    <div class="hero">
-      <div class="mid">
-        <div class="n">${cnt > 0 ? intFmt(cnt) : '—'}<span>颗</span></div>
-        <div class="g">${colors} 个色号 · ${weight > 0 ? fmt(weight,1) + ' g' : '无重量记录'}</div>
+    <div class="grp" style="padding:14px">
+      <div style="display:flex;align-items:baseline;gap:8px">
+        <div style="font-size:22px;font-weight:700;letter-spacing:-.3px">${st.colors}</div>
+        <div style="font-size:12px;color:var(--muted)">个色号经手 · 累计 ${intFmt(st.qty)} 颗</div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.7">
+        ${st.times} 次入库${st.last ? '，最近 ' + timeStr(st.last) : ''}<br>
+        这里只是账本，库存多少要看「库存」页——扣减不会扣在这边。
       </div>
     </div>
 
-    <div class="sect-t">颗重标定</div>
-    <div class="grp" style="padding:14px">
-      ${t.gpb > 0 ? `
-        <div style="display:flex;align-items:baseline;gap:8px">
-          <div style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.4px">
-            ${t.gpb.toFixed(4)}</div>
-          <div style="font-size:12px;color:var(--muted)">g / 颗</div>
-        </div>
-        <div style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.7">
-          标于 ${dayStr(t.cat)}　样本 ${t.cn} 颗 / ${fmt(t.cm)} g<br>
-          同品牌同直径共用这一个值，本型号下 ${COLORS.length} 个色号都按它换算。
-        </div>` : `
-        <div style="font-size:13px;color:var(--warn);line-height:1.7">
-          尚未标定。<br><span style="color:var(--muted);font-size:12px">
-          可以照常按颗记录；想用重量记账，得先标定一次。</span></div>`}
-      <button class="btn pri" id="btn-cal" style="margin-top:13px">${t.gpb > 0 ? '重新标定' : '去标定'}</button>
-    </div>
-
-    <div class="sect-t">实际色值<span class="sp">默认用 MARD 标准色</span></div>
-    ${stocked.length ? `<div class="grp">${stocked.map(code => {
-      const thx = hexFor(t.id, code), std = hexStd(code), diff = thx !== std;
-      const s = statOf(t, skuOf(t.id, code));
-      return `<div class="item" data-sw="${code}">
-        <div class="sw" style="background:${thx};${textStyle(thx)}">${code.replace(/[A-Z]/g,'')}</div>
+    <div class="sect-t">经手的色号<span class="sp">点一行校准实物颜色</span></div>
+    ${list.length ? `<div class="grp">${list.map(o => {
+      const thx = hexFor(src.id, o.code), std = hexStd(o.code), diff = thx !== std;
+      const dias = Array.from(o.dia).sort((a,b)=>a-b)
+        .map(d => String(d).replace(/\.0$/,'') + 'mm').join(' / ');
+      return `<div class="item" data-sw="${o.code}">
+        <div class="sw" style="background:${thx};${textStyle(thx)}">${o.code.replace(/[A-Z]/g,'')}</div>
         <div class="mid">
-          <b>${code} <span class="tag ${diff ? 'm' : 'n'}">${diff ? '已校色' : '标准色'}</span></b>
-          <small>${s.cnt !== null ? intFmt(s.cnt) + ' 颗' : '—'}${s.net !== null ? ' · ' + fmt(s.net) + ' g' : ''}</small>
+          <b>${o.code} <span class="tag ${diff ? 'm' : 'n'}">${diff ? '已校色' : '标准色'}</span></b>
+          <small>${dias} · 入过 ${intFmt(o.qty)} 颗</small>
         </div>
         <span class="arrow">›</span>
       </div>`;
     }).join('')}</div>` : `<div class="grp" style="padding:14px;font-size:12.5px;color:var(--muted);line-height:1.7">
-      还没有入库的色号。入库之后，哪个颜色实物偏色就点进来挑一个更接近的。
+      还没从这个来源入过货。录入时选它，这里就会有记录。
     </div>`}
 
-    <div class="sect-t">型号设置</div>
+    <div class="sect-t">设置</div>
     <div class="grp">
       <div class="item" id="btn-edit">
-        <div class="mid"><b>编辑名称 / 直径</b><small>${typeLabel(t)}${t.label ? ' · ' + t.label : ''}</small></div>
+        <div class="mid"><b>改名 / 类型</b><small>${src.name} · ${KIND_CN[src.kind] || '其他'}</small></div>
         <span class="arrow">›</span>
       </div>
       <div class="item" id="btn-del">
-        <div class="mid"><b style="color:var(--danger)">删除这个型号</b>
-          <small>${colors} 个色号有库存，删除会清空（日志保留）</small></div>
+        <div class="mid"><b style="color:var(--danger)">删除这个来源</b>
+          <small>只删账本记录，库存和各种数量都不动</small></div>
       </div>
     </div>
   `;
 
-  $('btn-cal').onclick = () => openCalibrate(t);
-  $('btn-edit').onclick = () => openBrandEdit(t);
+  $('btn-edit').onclick = () => openBrandEdit(src);
   $('btn-del').onclick = () => {
-    if (colors > 0 && !confirm(`这个型号下还有 ${colors} 个色号有库存，删除会清空这些记录（日志保留）。确定？`)) return;
-    S.types = S.types.filter(x => x.id !== t.id);
-    Object.keys(S.stock).forEach(k => { if (k.startsWith(t.id + '|')) delete S.stock[k]; });
-    logIt(t.id, null, 'ARCHIVE', `删除品牌型号 ${typeLabel(t)}`);
+    if (!confirm(`删除来源「${src.name}」？\n\n库存不受影响，只是以后查不到这几批是从它家买的了。`)) return;
+    S.sources = S.sources.filter(x => x.id !== src.id);
+    S.inLog.forEach(x => { if (x.sid === src.id) x.sid = null; });
+    logIt(null, null, 'ARCHIVE', `删除来源 ${src.name}`);
     save(); $('p-type').classList.remove('on');
     renderBrands(); renderStock(); refreshAll();
   };
   $('type-body').querySelectorAll('[data-sw]').forEach(el => {
-    el.onclick = () => openSwatch(t, el.dataset.sw);
+    el.onclick = () => openSwatch(src, el.dataset.sw);
   });
 
   $('p-type').classList.add('on');
 }
 $('type-back').onclick = () => $('p-type').classList.remove('on');
 
-/* ===================== 单个色号的实际颜色 ===================== */
-function openSwatch(t, code){
-  const std = hexStd(code), cur = hexFor(t.id, code);
+/* ===================== 单个色号在这个来源下的实际颜色 ===================== */
+function openSwatch(src, code){
+  const std = hexStd(code), cur = hexFor(src.id, code);
 
   sheet(`
     <div class="sh">
       <h3>${code} 的实际颜色</h3>
-      <p>${typeLabel(t)} 这批实物看着是什么色。只影响这个牌子的色块显示，不动标准色卡。</p>
+      <p>「${src.name}」这批实物看着是什么色。只记在来源这边，库存色块仍用标准色。</p>
     </div>
     <div class="sb">
       <div style="display:flex;gap:12px;align-items:center;margin-top:8px">
@@ -1207,8 +3387,8 @@ function openSwatch(t, code){
              style="width:100%;height:58px;padding:5px;border:1.5px solid var(--line);
                     border-radius:12px;background:#fff">
       <div style="font-size:11px;color:var(--faint);margin-top:9px;line-height:1.7">
-        点这个色块调出系统取色器，对着豆子或包装色卡取。各家同色号本来就有色差，
-        校准之后看库存就知道手里这袋到底长什么样。
+        各家同色号本来就有色差。这里校准的是「这家买的那批长什么样」，
+        用来对包装、翻购物记录；拼的时候还是按标准色认。
       </div>
       <button class="inline-btn" id="sw-reset" style="margin-top:13px">恢复成标准色</button>
     </div>
@@ -1230,42 +3410,77 @@ function openSwatch(t, code){
   $('sw-reset').onclick = () => { inp.value = std.toLowerCase(); preview(std); };
   $('sw-ok').onclick = () => {
     const hex = inp.value.toUpperCase();
-    t.swatch = t.swatch || {};
-    if (hex === std) delete t.swatch[code];
-    else t.swatch[code] = hex;
-    logIt(t.id, code, 'COLOR_FIX', hex === std
+    src.swatch = src.swatch || {};
+    if (hex === std) delete src.swatch[code];
+    else src.swatch[code] = hex;
+    logIt(src.id, code, 'SWATCH_SET', hex === std
       ? `${code} 恢复标准色`
       : `${code} 实际色值记为 ${hex}`);
     save(); closeSheet();
-    openType(); renderGrid(); renderStock();
+    openType(); renderGrid();
     if ($('p-color').classList.contains('on')) openColor();
   };
 }
 
-/* ===================== 标定 sheet ===================== */
-
-/** 按直径粗估颗重，仅用于给"该用哪种秤 / 取几颗"的建议，不参与任何计算 */
+/* ===================== 颗重标定 ===================== */
 function roughGpb(dia){
-  if (dia <= 3.2) return 0.019;   // 2.6mm 迷你
-  if (dia <= 7)   return 0.090;   // 5mm 中豆
-  return 0.350;                   // 10mm 大豆
+  return dia <= 3.2 ? 0.019 : (dia <= 6 ? 0.045 : 0.13);
 }
-/** 迷你豆样本太小，必须多取几颗，否则秤的绝对误差会吞掉结果 */
 function suggestSampleN(dia){ return dia <= 3.2 ? 60 : 40; }
 
-function openCalibrate(t, back){
-  const defN = t.cn || suggestSampleN(t.dia);
-  const isMini = t.dia <= 3.2;
-  let calN = defN, calM = (t.cm > 0) ? t.cm : null;
+/** 同直径最近一次测到的颗重，用来给同一堆里其他色号兜底 */
+function recentGpb(dia){
+  let best = null, at = 0;
+  Object.keys(S.stock).forEach(k => {
+    const d = Number(k.split('|')[1]);
+    if (d !== Number(dia)) return;
+    const it = S.stock[k];
+    if (it.gpb > 0 && (it.at || 0) > at){ best = it.gpb; at = it.at || 0; }
+  });
+  return best;
+}
+
+/**
+ * 标定的是「某色号在某直径下这一堆」的平均颗重，直接写回库存行。
+ * 一个色号 + 直径只有一份标定：重新测就整份换掉，不存历史。
+ * 换豆子了（颗粒粗细变了）随时可以再测，颗数不受影响，只是 ≈克数跟着变。
+ */
+function openCalibrate(target, back){
+  const { code, dia } = target;
+  const dTxt = String(dia).replace(/\.0$/,'');
+  const row = statRow(code, dia);
+  const prevGpb = row.gpb;                       // 这一行自己的；没有就是没标定过
+  const nearGpb = prevGpb ? null : recentGpb(dia);   // 同直径别处的值，只当参考
+  const defN = suggestSampleN(dia);
+
+  // 上次量过的样本直接接着改，不用再数一遍豆子
+  let calN = row.cal ? row.cal.n : defN;
+  let calM = row.cal ? row.cal.m
+           : (prevGpb ? Math.round(defN * prevGpb * 100) / 100 : null);
 
   sheet(`
     <div class="sh">
-      <h3>标定 ${typeLabel(t)} 颗重</h3>
-      <p>取<b>随手抓</b>的 ${defN} 颗豆子，数清颗数，称净重。标一次该型号全色号通用。</p>
+      <h3>${code} · ${dTxt}mm 的颗重</h3>
+      <p>${prevGpb
+        ? `现在是 <b>${prevGpb.toFixed(4)} g/颗</b>。重新称一次就整份换掉，每个色号只留最新这份。`
+        : '测一次，这一堆豆子的克数就能换算成颗数了。'}</p>
     </div>
     <div class="sb">
+      ${prevGpb
+        ? `<div class="prev" style="margin-top:0">
+             <div class="line"><span>现在的颗重</span><b>${prevGpb.toFixed(4)} g/颗</b></div>
+             ${row.cal ? `<div class="line"><span>上次量的样本</span>
+               <span>${dayStr(row.cal.at)} · ${intFmt(row.cal.n)} 颗 / ${fmt(row.cal.m)} g</span></div>` : ''}
+             ${row.qty > 0 ? `<div class="line"><span>库存 ${intFmt(row.qty)} 颗</span>
+               <span>颗数不动，只是 ≈克数会变</span></div>` : ''}
+           </div>`
+        : (nearGpb ? `<div class="prev" style="margin-top:0">
+             同直径别处量到 <b>${nearGpb.toFixed(4)}</b> g/颗，可以拿来对照；
+             但这一行还是单独测一次更准。
+           </div>` : '')}
       <div class="hint">
-        包装上标了颗数（如「1000 颗」）？把<b>整包称重</b>填进来，颗数填 1000——<b>不用数豆子，结果还更准</b>，因为完全没有数错的风险。
+        包装上标了颗数（如「1000 颗」）？把<b>整包称重</b>填进来，颗数填 1000——
+        <b>不用数豆子，结果还更准</b>，因为完全没有数错的风险。
       </div>
       <div class="field"><label>颗数 N（数出来的，或包装标注）</label>
         <div class="numfield" id="cal-nf">
@@ -1280,7 +3495,7 @@ function openCalibrate(t, back){
     </div>
     <div class="acts">
       <button class="btn" id="cal-cancel">取消</button>
-      <button class="btn pri" id="cal-ok">保存</button>
+      <button class="btn pri" id="cal-ok">${prevGpb ? '保存新颗重' : '保存'}</button>
     </div>
   `);
 
@@ -1300,36 +3515,53 @@ function openCalibrate(t, back){
     if (!(calN > 0) || !(calM > 0)){ out.textContent = '填入两项后显示结果'; return; }
 
     const w = calM / calN;
-    const bag = 30;                       // 以 30g 一袋作参照
+    const bag = 30;
     const cnt = bag / w;
-    // 秤的绝对误差 → 样本重的相对误差 → 折算到一袋的颗数误差
     const errOf = p => Math.round(cnt * (p / calM));
     const e01 = errOf(0.01), e10 = errOf(0.1);
+    const errTxt = n => n < 1 ? '不到 1 颗' : `±${n} 颗`;
+    const pct = prevGpb ? (w - prevGpb) / prevGpb : null;
+    const way = pct === null ? ''
+      : Math.abs(pct) < 0.005 ? '<span class="good">和原来一样</span>'
+      : `<span class="${Math.abs(pct) <= 0.15 ? 'good' : 'bad'}">`
+        + `${pct > 0 ? '+' : ''}${(pct * 100).toFixed(1)}%</span>`;
 
     out.innerHTML = `
-      颗重 <b>${w.toFixed(4)} g</b> / 颗 · ${bag} g 约 <b>${Math.round(cnt)}</b> 颗
+      颗重 <b>${w.toFixed(4)} g</b> / 颗
+      ${pct === null ? '' : `<span style="color:var(--faint)">（原 ${prevGpb.toFixed(4)}）</span> ${way}`}
+      ${(row.qty > 0 && prevGpb)
+        ? `<br>库存 ${intFmt(row.qty)} 颗：≈${fmt(row.qty * prevGpb)} → ≈<b>${fmt(row.qty * w)}</b> g　颗数不变`
+        : ''}
       <hr>
+      ${bag} g 约 <b>${Math.round(cnt)}</b> 颗
       <div class="line"><span>用 0.01 g 秤</span>
-        <span class="${e01 <= 20 ? 'good' : 'bad'}">±${e01} 颗</span></div>
+        <span class="${e01 <= 20 ? 'good' : 'bad'}">${errTxt(e01)}</span></div>
       <div class="line"><span>用 0.1 g 厨房秤</span>
-        <span class="${e10 <= 20 ? 'good' : 'bad'}">±${e10} 颗</span></div>
-      ${e10 > 20 ? `<span class="w">${isMini ? '迷你豆' : '这个样本量'}下 0.1g 的秤不够用，误差已超出 ±20 颗预算</span>` : ''}
-      ${calN < suggestSampleN(t.dia) ? `<br><span class="w">建议至少 ${suggestSampleN(t.dia)} 颗，样本太轻会让秤误差被放大</span>` : ''}
+        <span class="${e10 <= 20 ? 'good' : 'bad'}">${errTxt(e10)}</span></div>
+      ${e10 > 20 ? `<span class="w">${dia <= 3.2 ? '迷你豆' : '这个样本量'}下 0.1g 的秤不够用，误差已超出 ±20 颗预算</span>` : ''}
+      ${calN < suggestSampleN(dia) ? `<br><span class="w">建议至少 ${suggestSampleN(dia)} 颗，样本太轻会让秤误差被放大</span>` : ''}
+      ${(pct !== null && Math.abs(pct) > 0.15)
+        ? `<br><span class="w">跟上一次差了 ${(Math.abs(pct) * 100).toFixed(0)}%，确认称的是同一个色号、同一直径——直径混了会差很多</span>` : ''}
     `;
   };
 
   $('cal-nf').onclick = () => numPad({
-    title: `${typeLabel(t)}　样本颗数`, unit: '颗', decimal: false, value: calN,
+    title: `${code} · ${dTxt}mm　样本颗数`, unit: '颗', decimal: false, value: calN,
     onOk: v => { calN = Math.round(v); paintN(); upd(); }
   });
   $('cal-mf').onclick = () => numPad({
-    title: `${typeLabel(t)}　样本净重（已扣容器）`, unit: 'g', decimal: true,
+    title: `${code} · ${dTxt}mm　样本净重（已扣容器）`, unit: 'g', decimal: true,
     value: calM, onOk: v => { calM = v; paintM(); upd(); }
   });
 
   paintN(); paintM(); upd();
 
-  $('cal-cancel').onclick = closeSheet;
+  // 取消＝放弃这次标定，但不要连带把用户的录入也丢了
+  $('cal-cancel').onclick = () => {
+    pendingBack = null;
+    closeSheet();
+    if (back && back.code) setTimeout(() => openUpdate(back.code, back.dia, back), 180);
+  };
   $('cal-ok').onclick = () => {
     if (!(calN > 0) || !(calM > 0)){
       const bad = !(calN > 0) ? $('cal-nf') : $('cal-mf');
@@ -1338,50 +3570,50 @@ function openCalibrate(t, back){
       return;
     }
     const w = calM / calN;
-    t.gpb = w; t.cn = calN; t.cm = calM; t.cat = Date.now();
-    logIt(t.id, null, 'CALIBRATE', `标定 ${typeLabel(t)}：${calN} 颗 ${fmt(calM)} g → ${w.toFixed(4)} g/颗`);
+    const cur = statRow(code, dia);
+    writeRow(code, dia, cur.qty, w);
+    // 只留最新这一份样本，下次打开接着改，不算历史
+    S.stock[diaKey(code, dia)].cal = { n: calN, m: calM, at: Date.now() };
+    logIt(null, code, 'CALIBRATE',
+      `${dTxt}mm 颗重 ${w.toFixed(4)} g/颗${prevGpb ? `（原 ${prevGpb.toFixed(4)}）` : ''}`
+      + `（${calN} 颗 ${fmt(calM)} g）`);
     save(); closeSheet();
-    if ($('p-type').classList.contains('on') && curType === t.id) openType();
     renderBrands(); renderStock();
-    // 从"按克记账"被打断过来的，标定完原路回到那个色号
-    if (back) setTimeout(() => openUpdate(back.tid, back.code, { unit:'g' }), 220);
+    if ($('p-color').classList.contains('on')) openColor();
+    // 从录入抽屉过来的，标定完原路回去，已经填的数量还在
+    if (back) setTimeout(() => openUpdate(back.code, back.dia, back), 220);
     pendingBack = null;
   };
 }
 
-/* ===================== 品牌编辑 sheet ===================== */
-
-/* 直径预设。迷你豆（2.6mm）在圈内最常见，作为新建默认值 */
-const DIAMETERS = [
-  { v: 2.6,  name: '迷你' },
-  { v: 5.0,  name: '中豆' },
-  { v: 10.0, name: '大豆' }
+/* ===================== 来源编辑 sheet ===================== */
+const KINDS = [
+  { v:'brand', name:'品牌' },
+  { v:'shop',  name:'店铺' },
+  { v:'loose', name:'散装' }
 ];
-const DIA_DEFAULT = 2.6;
 
-function openBrandEdit(t){
-  const isNew = !t;
-  let dia = t ? t.dia : DIA_DEFAULT;
-  const hit = DIAMETERS.find(d => Math.abs(d.v - dia) < 1e-6);
+function openBrandEdit(src){
+  const isNew = !src;
+  let kind = src ? (src.kind || 'brand') : 'brand';
 
   sheet(`
     <div class="sh">
-      <h3>${isNew ? '新增品牌型号' : '编辑品牌型号'}</h3>
-      <p>品牌是你自己的划分，随便起名。<b>2.6mm 迷你豆</b>是圈内主流，已默认选中。</p>
+      <h3>${isNew ? '记一个来源' : '编辑来源'}</h3>
+      <p>只为了以后翻账时知道「这批是哪儿的」。名字随便起，不影响任何计算。</p>
     </div>
     <div class="sb">
-      <div class="field"><label>品牌 / 来源</label>
-        <input type="text" id="b-brand" value="${t ? t.brand : ''}" placeholder="如 MARD 原厂、某宝散装"></div>
-      <div class="field"><label>直径（mm）</label>
-        <div class="dias" id="b-dias">
-          ${DIAMETERS.map(d => `<button type="button" class="dia${hit && hit.v === d.v ? ' on' : ''}" data-d="${d.v}">${String(d.v).replace(/\.0$/,'')}<em>${d.name}</em></button>`).join('')}
-          <button type="button" class="dia${hit ? '' : ' on'}" data-d="other">
-            ${hit ? '其他' : String(dia).replace(/\.0$/,'')}<em>${hit ? '&nbsp;' : '自定义'}</em>
-          </button>
+      <div class="field"><label>名字</label>
+        <input type="text" id="b-name" value="${src ? src.name : ''}" placeholder="如 MARD 原厂、某宝那家、散装"></div>
+      <div class="field"><label>类型</label>
+        <div class="dias" id="b-kind">
+          ${KINDS.map(k => `<button type="button" class="dia${k.v === kind ? ' on' : ''}" data-k="${k.v}">${k.name}</button>`).join('')}
         </div>
       </div>
-      <div class="field"><label>备注（中豆 / 迷你豆，可空）</label>
-        <input type="text" id="b-label" value="${t ? (t.label||'') : ''}"></div>
+      <div style="font-size:11.5px;color:var(--faint);margin-top:12px;line-height:1.7">
+        来源不分直径，也不记库存。同一个来源可以进 2.6mm 也可以进 5mm——
+        库存是按「色号 + 直径」记的，跟来源无关。
+      </div>
     </div>
     <div class="acts">
       <button class="btn" id="b-cancel">取消</button>
@@ -1390,120 +3622,355 @@ function openBrandEdit(t){
   `);
   $('b-cancel').onclick = closeSheet;
 
-  const otherBtn = $('b-dias').querySelector('[data-d="other"]');
-  $('b-dias').querySelectorAll('.dia').forEach(b => {
+  $('b-kind').querySelectorAll('.dia').forEach(b => {
     b.onclick = () => {
-      if (b.dataset.d === 'other'){
-        $('b-dias').querySelectorAll('.dia').forEach(x => x.classList.toggle('on', x === b));
-        numPad({
-          title: '直径', unit: 'mm', decimal: true, value: dia,
-          onOk: v => {
-            dia = v;
-            otherBtn.innerHTML = `${String(v).replace(/\.0$/,'')}<em>自定义</em>`;
-          }
-        });
-        return;
-      }
-      dia = parseFloat(b.dataset.d);
-      $('b-dias').querySelectorAll('.dia').forEach(x => x.classList.toggle('on', x === b));
+      kind = b.dataset.k;
+      $('b-kind').querySelectorAll('.dia').forEach(x => x.classList.toggle('on', x === b));
     };
   });
 
   $('b-ok').onclick = () => {
-    const brand = $('b-brand').value.trim(), label = $('b-label').value.trim();
-    if (!brand) return alert('填个品牌名');
-    if (!(dia > 0)) return alert('直径要大于 0');
-    const dup = S.types.find(x => (!t || x.id !== t.id) && x.brand === brand && Math.abs(x.dia - dia) < 1e-6);
-    if (dup) return alert('已存在同品牌同直径的型号');
+    const name = $('b-name').value.trim();
+    if (!name) return alert('填个名字');
+    const dup = S.sources.find(x => (!src || x.id !== src.id) && x.name === name);
+    if (dup) return alert('已经有同名的来源了');
 
-    if (t){ t.brand = brand; t.dia = dia; t.label = label;
-            logIt(t.id, null, 'BRAND_EDIT', `改为 ${typeLabel(t)}`); }
-    else { const nt = { id:'t'+(S.seq++), brand, dia, label, gpb:null, cn:0, cm:null, cat:null, swatch:{} };
-           S.types.push(nt); logIt(null, null, 'BRAND_NEW', `新增型号 ${typeLabel(nt)}`); }
+    if (src){ src.name = name; src.kind = kind;
+              logIt(src.id, null, 'SRC_EDIT', `改为 ${name}（${KIND_CN[kind]}）`); }
+    else { const ns = { id:'s'+(S.seq++), name, kind, cat:Date.now(), swatch:{} };
+           S.sources.push(ns); logIt(null, null, 'SRC_NEW', `新增来源 ${name}`); }
     save(); closeSheet();
     renderBrands(); renderStock();
-    if (!isNew && curType === t.id) openType();
+    if (!isNew && curSource === src.id) openType();
   };
 }
 
-/* ===================== ③ 日志页 ===================== */
-function renderLogs(){
-  $('l-sub').textContent = `${S.logs.length} 条`;
-  const box = $('log-body');
-  if (!S.logs.length){ box.innerHTML = '<div class="empty">暂无操作记录</div>'; return; }
-  box.innerHTML = `<div class="grp">` + S.logs.map(l => {
-    const t = typeOf(l.tid);
-    return `<div class="log">
-      <div class="t">${dayStr(l.ts)}</div>
-      <div class="c">${l.code ? '<b>' + l.code + '</b> ' : ''}${l.note}
-        ${t ? '<em>· ' + t.brand + '</em>' : ''}</div>
-    </div>`;
-  }).join('') + `</div>`;
+/* ===================== ③ 设置页 ===================== */
+function renderSettings(){
+  const low = lowCount(), wn = S.warn;
+
+  const logsHtml = S.logs.length
+    ? `<div class="grp">` + S.logs.map(l => {
+        const src = sourceOf(l.sid);
+        return `<div class="log">
+          <div class="t">${dayStr(l.ts)}</div>
+          <div class="c">${l.code ? '<b>' + l.code + '</b> ' : ''}${l.note}
+            ${src ? '<em>· ' + src.name + '</em>' : ''}</div>
+        </div>`;
+      }).join('') + `</div>`
+    : '<div class="grp" style="padding:16px;font-size:12.5px;color:var(--muted)">还没有操作记录</div>';
+
+  $('set-body').innerHTML = `
+    <div class="sect-t">库存提醒</div>
+    <div class="grp">
+      <div class="item" id="btn-warn">
+        <div class="sw" style="background:#fdecea;color:#d93025;box-shadow:none">!</div>
+        <div class="mid">
+          <b>低库存预警</b>
+          <small>${wn > 0
+            ? `低于 ${intFmt(wn)} 颗的色号打红标 · 现在有 ${low} 个`
+            : '已关闭，库存页不显示红标'}</small>
+        </div>
+        <div class="right"><b>${wn > 0 ? intFmt(wn) + '<i>颗</i>' : '关'}</b></div>
+        <span class="arrow">›</span>
+      </div>
+    </div>
+
+    <div class="sect-t">批量操作</div>
+    <div class="grp">
+      <div class="item" id="btn-bulk">
+        <div class="sw" style="background:var(--accent-soft);color:var(--accent);box-shadow:none;font-size:17px">≡</div>
+        <div class="mid">
+          <b>批量初始化数量</b>
+          <small>把一批色号统一设成同一个数（按直径 + 系列）</small>
+        </div>
+        <span class="arrow">›</span>
+      </div>
+    </div>
+
+    <div class="sect-t">操作记录<span class="sp">${S.logs.length} 条</span></div>
+    ${logsHtml}
+
+    <div class="sect-t">数据</div>
+    <div class="grp">
+      <div class="item" id="btn-wipe">
+        <div class="mid"><b style="color:var(--danger)">清空所有库存与日志</b>
+          <small>回到全新状态，来源设置也会一起删掉</small></div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--faint);padding:14px 2px 34px;line-height:1.8">
+      数据存在这台设备本地。覆盖安装不会丢，<b>卸载重装或清除应用数据会丢</b>。
+    </div>
+  `;
+
+  $('btn-warn').onclick = openWarn;
+  $('btn-bulk').onclick = openBulkInit;
+  $('btn-wipe').onclick = () => {
+    if (!confirm('会删掉全部来源、库存和日志，回到出厂状态。确定？')) return;
+    localStorage.removeItem(KEY);
+    S = seed(); save();
+    pickedCode = null; curSource = null;
+    refreshAll(); renderSort();
+  };
+}
+
+/* ===================== 预警值 ===================== */
+function openWarn(){
+  let v = S.warn || 0;
+
+  function paint(){
+    const low = COLORS.filter(c => {
+      const a = agg(c.code);
+      return v > 0 && a.lines > 0 && a.count < v;
+    }).length;
+
+    $('wn-v').textContent = v > 0 ? intFmt(v) : '已关闭';
+    $('wn-v').classList.toggle('ph', !(v > 0));
+    $('wn-out').innerHTML = v > 0
+      ? `现在有 <b>${low}</b> 个色号低于 ${intFmt(v)} 颗，库存页会给它们打红标。`
+      : '预警关闭，库存页不显示任何红标。';
+    $('wn-off').style.display = v > 0 ? '' : 'none';
+  }
+
+  sheet(`
+    <div class="sh">
+      <h3>低库存预警</h3>
+      <p>低于这个颗数就在色块左上角打一个红标，一眼看出快用完的色号。</p>
+    </div>
+    <div class="sb">
+      <div class="lbl">预警值</div>
+      <div class="numfield" id="wn-f">
+        <span class="v" id="wn-v">500</span><span class="u">颗</span>
+      </div>
+      <div class="prev" id="wn-out"></div>
+      <button class="inline-btn" id="wn-off" style="margin-top:12px">关闭预警</button>
+    </div>
+    <div class="acts">
+      <button class="btn" id="wn-cancel">取消</button>
+      <button class="btn pri" id="wn-ok">保存</button>
+    </div>
+  `);
+
+  $('wn-f').onclick = () => numPad({
+    title: '低于多少颗时提醒', unit: '颗', decimal: false, value: v > 0 ? v : null,
+    onOk: x => { v = Math.round(x); paint(); }
+  });
+  $('wn-off').onclick = () => { v = 0; paint(); };
+  $('wn-cancel').onclick = closeSheet;
+  $('wn-ok').onclick = () => {
+    S.warn = v > 0 ? Math.round(v) : 0;
+    logIt(null, null, 'WARN_SET', S.warn > 0
+      ? `预警值设为 ${intFmt(S.warn)} 颗` : '关闭低库存预警');
+    save(); closeSheet();
+    renderStock(); renderSettings();
+  };
+  paint();
+}
+
+/* ===================== 批量初始化 ===================== */
+function openBulkInit(){
+  if (!S.dias.length){ alert('还没有任何库存，先录入一次再来'); return; }
+
+  const st = { dia: S.dias[0], fam:'all', qty:1000, scope:'stocked' };
+
+  const codesOf = () => COLORS
+    .filter(c => st.fam === 'all' || c.family === st.fam)
+    .filter(c => st.scope === 'all' || (stockAt(c.code, st.dia) && qtyAt(c.code, st.dia) > 0))
+    .map(c => c.code);
+
+  function form(){
+    const codes = codesOf();
+    const famCount = f => COLORS.filter(c => f === 'all' || c.family === f).length;
+    const stockedAll = COLORS.filter(c => stockAt(c.code, st.dia) && qtyAt(c.code, st.dia) > 0).length;
+
+    sheet(`
+      <div class="sh">
+        <h3>批量初始化数量</h3>
+        <p>把一批色号统一设成同一个颗数。用在刚买整套、或者刚盘完一整盒的时候。</p>
+      </div>
+      <div class="sb">
+        <div class="lbl">直径</div>
+        <div class="dias" id="bi-dias" style="justify-content:flex-start">
+          ${S.dias.map(d => `<button type="button" class="dia${Number(d) === Number(st.dia) ? ' on' : ''}"
+              data-d="${d}">${String(d).replace(/\.0$/,'')}<em>mm</em></button>`).join('')}
+        </div>
+
+        <div class="lbl">系列</div>
+        <div class="dias" id="bi-fams" style="flex-wrap:wrap">
+          <button type="button" class="dia${st.fam === 'all' ? ' on' : ''}" data-f="all"
+            style="flex:1 1 30%">全部<em>${famCount('all')}</em></button>
+          ${FAMILIES.map(f => `<button type="button" class="dia${st.fam === f ? ' on' : ''}" data-f="${f}"
+            style="flex:1 1 30%">${f}<em>${famCount(f)}</em></button>`).join('')}
+        </div>
+
+        <div class="lbl">每个色号设为</div>
+        <div class="numfield" id="bi-qty">
+          <span class="v" id="bi-qv">${intFmt(st.qty)}</span><span class="u">颗</span>
+        </div>
+
+        <div class="lbl">范围</div>
+        <div class="seg" id="bi-scope">
+          <button type="button" data-s="stocked"${st.scope === 'stocked' ? ' class="on"' : ''}
+            ${stockedAll ? '' : 'disabled'}>已有记录（${stockedAll}）</button>
+          <button type="button" data-s="all"${st.scope === 'all' ? ' class="on"' : ''}>
+            全部 ${famCount(st.fam)} 色</button>
+        </div>
+
+        <div class="prev" style="background:var(--warn-soft);color:var(--warn)">
+          会把选中的 <b>${codes.length}</b> 个色号在
+          <b>${String(st.dia).replace(/\.0$/,'')}mm</b> 下的数量全部改成 <b>${intFmt(st.qty)}</b> 颗，
+          原来的颗数被覆盖，不会自动备份。
+        </div>
+      </div>
+      <div class="acts">
+        <button class="btn" id="bi-cancel">取消</button>
+        <button class="btn pri" id="bi-next">下一步</button>
+      </div>
+    `);
+
+    $('bi-dias').querySelectorAll('.dia').forEach(b => {
+      b.onclick = () => { st.dia = Number(b.dataset.d); if (!stockedAll) st.scope = 'all'; form(); };
+    });
+    $('bi-fams').querySelectorAll('.dia').forEach(b => {
+      b.onclick = () => { st.fam = b.dataset.f; form(); };
+    });
+    $('bi-qty').onclick = () => numPad({
+      title: '每个色号设成多少颗', unit: '颗', decimal: false, value: st.qty,
+      onOk: v => { st.qty = Math.round(v); form(); }
+    });
+    $('bi-scope').querySelectorAll('button').forEach(b => {
+      b.onclick = () => { if (b.disabled) return; st.scope = b.dataset.s; form(); };
+    });
+    $('bi-cancel').onclick = closeSheet;
+    $('bi-next').onclick = () => { if (st.qty > 0) confirmStep(); };
+  }
+
+  function confirmStep(){
+    const codes = codesOf();
+    if (!codes.length) return alert('这个范围内没有色号');
+
+    sheet(`
+      <div class="sh">
+        <h3 style="color:var(--danger)">确认初始化？</h3>
+        <p>这一步会直接改写库存，没有撤销按钮。</p>
+      </div>
+      <div class="sb">
+        <div class="prev" style="background:#fdecea;color:#8f241a;margin-top:0">
+          <div style="font-size:13px;line-height:1.9;color:var(--text)">
+            直径　<b>${String(st.dia).replace(/\.0$/,'')}mm</b><br>
+            系列　<b>${st.fam === 'all' ? '全部系列' : st.fam}</b><br>
+            数量　<b>${intFmt(st.qty)} 颗</b> / 色号<br>
+            范围　<b>${codes.length} 个色号</b>${st.scope === 'all' ? '（含还没有记录的）' : ''}
+          </div>
+          <hr>
+          覆盖后这些色号原来的数量都没了，只在日志里留一条汇总。
+        </div>
+        <div style="font-size:11.5px;color:var(--muted);padding:10px 2px 0;line-height:1.7">
+          点错了就点下面的「返回」，什么都还没改。
+        </div>
+      </div>
+      <div class="acts">
+        <button class="btn" id="bi-back">返回</button>
+        <button class="btn dgr" id="bi-go">确认初始化</button>
+      </div>
+    `);
+
+    $('bi-back').onclick = form;
+    $('bi-go').onclick = () => doBulkInit(codes, st.qty, st.dia);
+  }
+
+  function doBulkInit(codes, qty, dia){
+    const gpb = recentGpb(dia);
+    codes.forEach(code => writeRow(code, dia, qty, gpb));
+    logIt(null, null, 'BULK_INIT',
+      `初始化 ${String(dia).replace(/\.0$/,'')}mm · ${st.fam === 'all' ? '全部系列' : st.fam}：${codes.length} 个色号都设为 ${intFmt(qty)} 颗`);
+    save();
+    closeSheet();
+    refreshAll();
+    pickedCode = null;
+    renderSort();
+  }
+
+  form();
 }
 
 /* ===================== 点选式色号定位 ===================== */
 const DIGITS = ['1','2','3','4','5','6','7','8','9','0'];
 
-function openPicker(){
+/**
+ * 点选色号。不传参数＝选完跳转到色号详情；
+ * 传 { onPick, sub, title, okText, onOk } 时用于批量/连续录入，选完不关面板。
+ */
+function openPicker(opt){
+  opt = opt || {};
   const st = { fam:null, d1:null, d2:null };
+  let editing = 0;                      // 当前展开的是第几位，null 表示全部收起
 
   sheet(`
     <div class="sh">
-      <h3>定位色号</h3>
-      <p>顺序点：系列 → 数字 → 数字。位数点重了就是重选，不用删。</p>
+      <h3>${opt.title || '定位色号'}</h3>
+      <p id="pk-sub">${opt.sub || '选完一位自动收起。想改就点上面那一格，再展开重选。'}</p>
     </div>
     <div class="sb">
-      <div class="lbl">① 系列</div>
-      <div class="picks" id="pk1"></div>
-      <div class="lbl">② 数字</div>
-      <div class="picks" id="pk2"></div>
-      <div class="lbl">③ 数字（可以跳过，直接点确定）</div>
-      <div class="picks" id="pk3"></div>
-      <div class="prev" id="pk-out" style="margin-top:12px">先点一个系列</div>
-      <div id="pk-match" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:6px;margin-bottom:4px"></div>
+      <div class="slots" id="pk-slots"></div>
+      <div id="pk-stage"><div class="picks" id="pk-grid"></div></div>
+      <div class="prev" id="pk-out" style="margin-top:11px">先点一个系列</div>
+      <div id="pk-match" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:6px"></div>
     </div>
     <div class="acts">
       <button class="btn" id="pk-cancel">取消</button>
-      <button class="btn pri" id="pk-ok">确定</button>
+      <button class="btn pri" id="pk-ok">${opt.okText || '确定'}</button>
     </div>
   `);
 
-  // 这个前缀下还有几个色号
   const cntOf = p => p ? COLORS.filter(c => c.code.startsWith(p)).length : 0;
   const prefix = () => (st.fam || '') + (st.d1 || '') + (st.d2 || '');
   const matched = () => { const p = prefix(); return p ? COLORS.filter(c => c.code.startsWith(p)) : []; };
 
   function paint(){
-    /* ① 系列：角标是这个系列里有货的色号数 */
-    $('pk1').innerHTML = FAMILIES.map(f => {
-      const has = COLORS.filter(c => c.family === f && agg(c.code).brands > 0).length;
-      return `<button type="button" class="pick sm${st.fam === f ? ' on' : ''}" data-f="${f}">
-                ${f}<em>${has || '·'}</em></button>`;
+    /* 位槽：已选的值直接摊在顶部，像计算器显示屏 */
+    $('pk-slots').innerHTML = [
+      { i:0, lab:'系列', v:st.fam },
+      { i:1, lab:'数字', v:st.d1 },
+      { i:2, lab:'数字', v:st.d2 }
+    ].map(s => {
+      const locked = (s.i === 1 && !st.fam) || (s.i === 2 && !st.d1);
+      return `<button type="button" class="slot${editing === s.i ? ' on' : ''}${s.v ? '' : ' blank'}"
+                data-slot="${s.i}"${locked ? ' disabled' : ''}>
+                <em>${s.lab}</em><b>${s.v || '—'}</b></button>`;
     }).join('');
 
-    /* ② 第二位数字：不存在的位直接置灰，避免点空 */
-    if (!st.fam){
-      $('pk2').innerHTML = '<div style="font-size:12px;color:var(--faint);padding:2px">先选系列</div>';
-      $('pk3').innerHTML = '<div style="font-size:12px;color:var(--faint);padding:2px">先选系列</div>';
-    } else {
-      $('pk2').innerHTML = DIGITS.map(k => {
+    /* 只渲染当前展开的那一位，其它都收起 */
+    const g = $('pk-grid');
+    g.className = 'picks' + (editing === 0 || editing === null ? '' : ' nums');
+    // 展开区高度跟着内容走：系列一行 46，数字两行 98，全收起时只留一行提示
+    $('pk-stage').style.minHeight = editing === 0 ? '46px' : (editing === 1 || editing === 2) ? '98px' : '30px';
+    if (editing === 0){
+      g.innerHTML = FAMILIES.map(f => {
+        const has = COLORS.filter(c => c.family === f && agg(c.code).count > 0).length;
+        return `<button type="button" class="pick sm${st.fam === f ? ' on' : ''}" data-v="${f}">
+                  ${f}<em>${has || '·'}</em></button>`;
+      }).join('');
+    } else if (editing === 1){
+      g.innerHTML = DIGITS.map(k => {
         const n = cntOf(st.fam + k);
-        return `<button type="button" class="pick${st.d1 === k ? ' on' : ''}" data-d1="${k}"
+        return `<button type="button" class="pick${st.d1 === k ? ' on' : ''}" data-v="${k}"
                   ${n ? '' : 'disabled'}>${k}<em>${n || ''}</em></button>`;
       }).join('');
-      const p2 = st.fam + (st.d1 || '');
-      $('pk3').innerHTML = st.d1
-        ? DIGITS.map(k => {
-            const n = cntOf(p2 + k);
-            return `<button type="button" class="pick${st.d2 === k ? ' on' : ''}" data-d2="${k}"
-                      ${n ? '' : 'disabled'}>${k}<em>${n || ''}</em></button>`;
-          }).join('')
-        : '<div style="font-size:12px;color:var(--faint);padding:2px">先选第二位</div>';
+    } else if (editing === 2){
+      const p2 = st.fam + st.d1;
+      g.innerHTML = DIGITS.map(k => {
+        const n = cntOf(p2 + k);
+        return `<button type="button" class="pick${st.d2 === k ? ' on' : ''}" data-v="${k}"
+                  ${n ? '' : 'disabled'}>${k}<em>${n || ''}</em></button>`;
+      }).join('');
+    } else {
+      g.innerHTML = `<div style="font-size:12px;color:var(--faint);line-height:1.7">
+        点上面任意一格继续选。三格都填好就不用再点了。</div>`;
     }
 
     /* 实时匹配 */
-    const list = matched(), exact = BY_CODE[prefix()];
-    const box = $('pk-match');
+    const list = matched(), exact = BY_CODE[prefix()], box = $('pk-match');
     if (!st.fam){
       box.innerHTML = '';
       $('pk-out').innerHTML = '先点一个系列';
@@ -1513,44 +3980,64 @@ function openPicker(){
     } else {
       box.innerHTML = list.map(c => {
         const hx = hexOf(c.code), a = agg(c.code);
-        return `<button type="button" class="bead${a.brands > 0 ? ' hasq' : ''}" data-code="${c.code}"
+        return `<button type="button" class="bead${a.count > 0 ? ' hasq' : ''}" data-code="${c.code}"
                   style="background:${hx};${textStyle(hx)}">
-                  ${c.code}${a.brands > 0
+                  ${c.code}${a.count > 0
                     ? `<span class="qty">${a.count > 0 ? intFmt(a.count) : '—'}</span>` : ''}
                 </button>`;
       }).join('');
       box.querySelectorAll('.bead').forEach(b => {
-        b.onclick = () => { go(b.dataset.code); };
+        b.onclick = () => go(b.dataset.code);
       });
 
       if (exact) $('pk-out').innerHTML = `就是 <b>${exact.code}</b>，点确定打开`;
       else if (list.length === 1) $('pk-out').innerHTML = `只有一个 <b>${list[0].code}</b>，点确定打开`;
-      else $('pk-out').innerHTML = `<b>${prefix()}</b> 开头的有 ${list.length} 个，接着点第三位，或点下面的色块`;
+      else $('pk-out').innerHTML = `<b>${prefix()}</b> 开头有 ${list.length} 个，接着点，或直接点下面的色块`;
     }
 
-    /* 事件 */
-    $('pk1').querySelectorAll('.pick').forEach(b => {
+    /* 位槽点击：展开 / 收起 */
+    $('pk-slots').querySelectorAll('.slot').forEach(b => {
       b.onclick = () => {
-        if (st.fam === b.dataset.f) return;
-        st.fam = b.dataset.f; st.d1 = null; st.d2 = null; paint();
-      };
-    });
-    $('pk2').querySelectorAll('.pick').forEach(b => {
-      b.onclick = () => {
-        if (st.d1 === b.dataset.d1){ st.d1 = null; st.d2 = null; }   // 再点一次取消
-        else { st.d1 = b.dataset.d1; st.d2 = null; }
+        const i = +b.dataset.slot;
+        editing = (editing === i) ? null : i;
         paint();
       };
     });
-    $('pk3').querySelectorAll('.pick').forEach(b => {
+
+    /* 选项点击：填值 → 收起这一位 → 自动展开下一位 */
+    g.querySelectorAll('.pick').forEach(b => {
       b.onclick = () => {
-        st.d2 = (st.d2 === b.dataset.d2) ? null : b.dataset.d2;
+        const v = b.dataset.v;
+        if (editing === 0){
+          if (st.fam === v){ st.fam = null; st.d1 = null; st.d2 = null; editing = 0; }
+          else { st.fam = v; st.d1 = null; st.d2 = null; editing = 1; }
+        } else if (editing === 1){
+          if (st.d1 === v){ st.d1 = null; st.d2 = null; editing = 1; }
+          else {
+            st.d1 = v; st.d2 = null;
+            // 前缀已经唯一确定色号的话，就不用再点第三位了
+            const p = st.fam + st.d1;
+            editing = (BY_CODE[p] && cntOf(p) === 1) ? null : 2;
+          }
+        } else if (editing === 2){
+          if (st.d2 === v){ st.d2 = null; editing = 2; }
+          else { st.d2 = v; editing = null; }
+        }
         paint();
       };
     });
   }
 
   function go(code){
+    if (opt.onPick){
+      // 连续录入模式：不关面板，选完清掉后两位，同系列可以接着点下一个
+      opt.onPick(code, {
+        setSub: t => { const e = $('pk-sub'); if (e) e.textContent = t; },
+        close: closeSheet
+      });
+      st.d1 = null; st.d2 = null; editing = 1; paint();
+      return;
+    }
     pickedCode = code;
     closeSheet();
     curCode = code;
@@ -1559,6 +4046,7 @@ function openPicker(){
 
   $('pk-cancel').onclick = closeSheet;
   $('pk-ok').onclick = () => {
+    if (opt.onOk){ opt.onOk(); return; }
     const exact = BY_CODE[prefix()], list = matched();
     if (exact) return go(exact.code);
     if (list.length === 1) return go(list[0].code);
@@ -1592,13 +4080,17 @@ $('scrim').onclick = closeSheet;
 document.querySelectorAll('.tabbar button').forEach(b => {
   b.onclick = () => {
     tab = b.dataset.tab;
+    lastBatch = null;              // 切换 tab 也放弃撤销权
+    $('p-patd').classList.remove('on');
     document.querySelectorAll('.tabbar button').forEach(x => x.classList.toggle('on', x === b));
+    $('p-pat').classList.toggle('on', tab === 'pat');
     $('p-stock').classList.toggle('on', tab === 'stock');
     $('p-brand').classList.toggle('on', tab === 'brand');
-    $('p-log').classList.toggle('on', tab === 'log');
+    $('p-set').classList.toggle('on', tab === 'set');
+    if (tab === 'pat') renderPatterns();
     if (tab === 'stock') renderStock();
     if (tab === 'brand') renderBrands();
-    if (tab === 'log') renderLogs();
+    if (tab === 'set') renderSettings();
   };
 });
 
@@ -1611,13 +4103,18 @@ $('btn-sort').onclick = () => {
 };
 $('btn-add-brand').onclick = () => openBrandEdit(null);
 
-function refreshAll(){ renderStock(); renderBrands(); renderLogs(); }
+function refreshAll(){ renderPatterns(); renderStock(); renderBrands(); renderSettings(); }
 refreshAll();
 
 /* ===================== 调试入口（仅截图核对用，不影响正常使用） ===================== */
 (function dev(){
   const p = new URLSearchParams(location.search), d = p.get('dev');
   if (!d) return;
+  if (p.get('anim') === '0'){          // 截图核对时关掉过渡，便于一次构图
+    const s = document.createElement('style');
+    s.textContent = '*{transition:none!important;animation:none!important}';
+    document.head.appendChild(s);
+  }
   const tap = t => document.querySelector(`.tabbar button[data-tab="${t}"]`).click();
   if (d === 'color'){ curCode = p.get('c') || 'A21'; openColor(); }
   if (d === 'sheet'){ curCode = p.get('c') || 'A21'; openColor();
@@ -1626,14 +4123,119 @@ refreshAll();
     setTimeout(() => openUpdate(p.get('t') || 't1', curCode), 30);
     setTimeout(() => document.getElementById('up-field').click(), 200); }
   if (d === 'pick'){ setTimeout(openPicker, 30); }
-  if (d === 'cal'){ tap('brand'); curType = p.get('t') || 't2'; openType();
-    setTimeout(() => openCalibrate(typeOf(curType)), 60); }
-  if (d === 'sw'){ tap('brand'); curType = p.get('t') || 't1'; openType();
-    setTimeout(() => openSwatch(typeOf(curType), p.get('c') || 'A21'), 60); }
+  if (d === 'pick2'){ setTimeout(openPicker, 30);
+    setTimeout(() => { const b = document.querySelector('#pk-grid .pick'); b && b.click(); }, 260); }
+  if (d === 'pick3'){ setTimeout(openPicker, 30);
+    setTimeout(() => { const b = document.querySelector('#pk-grid .pick'); b && b.click(); }, 200);
+    setTimeout(() => { const b = [...document.querySelectorAll('#pk-grid .pick')].find(x => x.dataset.v === '2');
+                       b && b.click(); }, 360); }
+  if (d === 'pickmeasure'){
+    setTimeout(openPicker, 30);
+    setTimeout(() => {
+      const sl = document.getElementById('pk-slots');
+      const s0 = sl && sl.querySelector('.slot');
+      const stage = document.getElementById('pk-stage');
+      const cs = s0 && getComputedStyle(s0), cp = sl && getComputedStyle(sl);
+      const kids = s0 ? [...s0.children].map(e => e.tagName + ':' + e.offsetHeight).join(',') : '';
+      document.title = [
+        'slots=' + (sl && sl.offsetHeight) + '(' + (cp && cp.height) + ')',
+        'slot=' + (s0 && s0.offsetHeight) + '(' + (cs && cs.height) + ')',
+        'pad=' + (cs && cs.paddingTop) + '/' + (cs && cs.paddingBottom),
+        'minH=' + (cs && cs.minHeight) + ' lh=' + (cs && cs.lineHeight),
+        'kids=' + kids,
+        'stage=' + (stage && stage.offsetHeight),
+        'sheet=' + document.getElementById('sheet').offsetHeight
+      ].join(' ');
+    }, 700);
+  }
+  if (d === 'bulk'){ tap('set'); setTimeout(openBulkInit, 80); }
+  if (d === 'bulk2'){ tap('set'); setTimeout(openBulkInit, 40);
+    setTimeout(() => document.getElementById('bi-next').click(), 160); }
+  if (d === 'cal'){ tap('brand');
+    setTimeout(() => openCalibrate({ code: p.get('c') || 'A21', dia: 2.6 }), 80); }
+  if (d === 'calback'){ tap('pat'); setTimeout(() => openPattern('p1'), 60);
+    setTimeout(() => openUpdate('A21', 2.6), 200);
+    setTimeout(() => openCalibrate({ code:'A21', dia:2.6 }, { code:'A21', dia:2.6 }), 340); }
+  if (d === 'sw'){ tap('brand'); curSource = p.get('s') || 's1'; openType();
+    setTimeout(() => openSwatch(sourceOf(curSource), p.get('c') || 'A21'), 60); }
   if (d === 'brand'){ tap('brand'); }
-  if (d === 'type'){ tap('brand'); curType = p.get('t') || 't1'; openType(); }
-  if (d === 'log'){ tap('log'); }
+  if (d === 'type'){ tap('brand'); curSource = p.get('s') || 's1'; openType(); }
+  if (d === 'upd'){ tap('stock'); setTimeout(() => openColor(), 60);
+    setTimeout(() => openUpdate('A21', 2.6), 200); }
+  if (d === 'updg'){ tap('stock'); setTimeout(() => openColor(), 60);
+    setTimeout(() => openUpdate('A21', 2.6, {
+      unit:p.get('unit') || 'g', op:p.get('op') || 'sub', v:Number(p.get('v') || 12.5)
+    }), 200); }
+  if (d === 'recal'){ tap('stock'); setTimeout(() => openColor(), 60);
+    setTimeout(() => openUpdate('A21', 2.6, { unit:'g', op:'sub', v:12.5 }), 180);
+    setTimeout(() => { const b = document.getElementById('up-cal'); b && b.click(); }, 320); }
+  if (d === 'patd2'){ tap('pat'); setTimeout(() => openPattern('p1'), 60); }
+  if (d === 'pat'){ tap('pat'); }
+  if (d === 'patnew'){ tap('pat'); setTimeout(newPattern, 60); }
+  if (d === 'pcons'){ tap('pat'); setTimeout(() => openPattern('p2'), 60);
+    setTimeout(() => openConsume('p2'), 220); }
+  if (d === 'pcons2'){ tap('pat'); setTimeout(() => openPattern('p2'), 60);
+    setTimeout(() => openConsume('p2'), 200);
+    setTimeout(() => document.getElementById('bc-ok').click(), 320); }
+  if (d === 'pcons3'){ tap('pat'); setTimeout(() => openPattern('p2'), 60);
+    setTimeout(() => openConsume('p2'), 200);
+    setTimeout(() => document.getElementById('bc-ok').click(), 300);
+    setTimeout(() => openPattern('p2'), 420); }
+  if (d === 'patd'){ tap('pat'); setTimeout(() => openPattern(p.get('p') || 'p1'), 60); }
+  if (d === 'patdsort'){ tap('pat'); setTimeout(() => openPattern(p.get('p') || 'p1'), 60);
+    setTimeout(() => { const row = $('patd-sortrow'); if (row) row.style.display = ''; }, 240); }
+  if (d === 'patdsortlast'){ S.patSort = p.get('sort') || 'needAsc'; save();
+    tap('pat'); setTimeout(() => openPattern(p.get('p') || 'p1'), 60); }
+  if (d === 'patdimg'){ tap('pat'); setTimeout(() => {
+    const pt = patOf(p.get('p') || 'p1');
+    pt.img = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300">' +
+      '<rect width="400" height="300" fill="#f3efe6"/>' +
+      '<circle cx="200" cy="120" r="70" fill="#e2574c"/>' +
+      '<rect x="150" y="185" width="100" height="70" rx="8" fill="#f0e6cf"/>' +
+      '<circle cx="180" cy="110" r="9" fill="#fff"/><circle cx="220" cy="110" r="9" fill="#fff"/></svg>');
+    save(); openPattern(pt.id);
+  }, 60); }
+  if (d === 'numpad'){ tap('pat'); setTimeout(() => openPattern(p.get('p') || 'p1'), 60);
+    setTimeout(() => { const el = document.querySelector('#patd-body .item'); if (el) el.click(); }, 300); }
+  if (d === 'patmiss'){ tap('pat'); setTimeout(() => {
+      const el = document.querySelector('.st[data-miss]'); if (el) el.click(); }, 260); }
+  if (d === 'patadd'){ tap('pat'); setTimeout(() => openPattern('p1'), 60);
+    setTimeout(() => addColors('p1'), 220); }
+  if (d === 'stock'){ tap('stock'); }
+  if (d === 'color'){ tap('stock'); curCode = p.get('c') || 'A21';
+    setTimeout(() => { pickedCode = curCode; openColor(); }, 60); }
+  if (d === 'set'){ tap('set'); }
+  if (d === 'low'){ filter = 'low'; setTimeout(renderStock, 30); }
+  if (d === 'warn'){ tap('set'); setTimeout(openWarn, 80); }
 })();
+
+/* ===================== Android 壳的接口 ===================== */
+/**
+ * 返回键：键盘 → 抽屉 → 推入页，逐层退一层。
+ * 返回 true 表示这一下被页面吃掉了，壳就不退出 App。
+ */
+window.__androidBack = function(){
+  const pad = document.querySelector('.padlayer.on');
+  if (pad){ pad.remove(); return true; }          // 数字键盘开着，先收键盘
+
+  const sh = document.getElementById('sheet');
+  if (sh && sh.classList.contains('on')){ closeSheet(); return true; }
+
+  const push = document.querySelector('.push.on');
+  if (push){
+    push.classList.remove('on');
+    if (push.id === 'p-patd'){ curPat = null; renderPatterns(); }
+    return true;
+  }
+  return false;
+};
+
+/** 壳退出/切后台时用它取当前状态落盘 */
+window.__dumpState = function(){ return JSON.stringify(S); };
+
+// 第一次打开（什么都没操作过）也先落一份，否则清缓存后没有备份可恢复
+try { if (!localStorage.getItem(KEY)) save(); } catch(e){}
 </script>
 </body>
 </html>
